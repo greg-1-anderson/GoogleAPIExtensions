@@ -1,4 +1,4 @@
-groups:
+'smartlist::subdomain_lists':
   west:
     lists:
       webminister:

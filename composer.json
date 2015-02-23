@@ -1,0 +1,16 @@
+{
+  "require": {
+    "symfony/yaml": "~2.2",
+    "google/apiclient": "1.0.*@beta"
+  },
+  "autoload": {
+    "psr-0": {
+      "GoogleAPIExtensions":    "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+        "dev-master": "1.0.x-dev"
+    }
+  }
+}

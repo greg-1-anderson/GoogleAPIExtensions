@@ -1,10 +1,3 @@
-This library provides extensions / wrappers to the Google API PHP client
-library.
-
-See:
-
-https://developers.google.com/api-client-library/php/
-
 Group Management
 ================
 Callers may use this class to update their Google Groups memberships

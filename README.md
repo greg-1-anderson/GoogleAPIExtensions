@@ -14,6 +14,15 @@ API directly is that this way makes it easier to manage aliases for groups
 of groups, and other inter-group relationships, while minimizing the number
 of remote API calls to Google that need to be made.
 
+Testing the Code
+================
+This library isn't completed yet, but it includes a simple main.php file.
+To use it:
+
+1. Clone this repository
+1. Run `composer install`
+1. [Set up your authorization information](http://docs.westkingdom.org/en/latest/google-api/)
+1. Run `php main.php`
 
 Email Address Sanitization
 ==========================

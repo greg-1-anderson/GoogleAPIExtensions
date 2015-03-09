@@ -30,12 +30,17 @@ $client = new Google_Client();
 $client->setApplicationName("Google Group Test");
 
 // If we have an API key, that will give us a certain amount of access.
-if (FALSE && $api_key) {
+if ($api_key) {
   $client->setDeveloperKey($api_key);
 }
 
+print("Set authentication information.\n");
+
 // If we have a service account, that will give us even more access.
 if ($service_account_info) {
+  var_export($service_account_info);
+  print("\n");
+
   $client_id = $service_account_info['client-id'];
   $service_account_name = $service_account_info['email-address'];
   $key_file_location = $service_account_info['key-file'];
@@ -46,7 +51,12 @@ if ($service_account_info) {
   $key = file_get_contents($key_file_location);
   $cred = new Google_Auth_AssertionCredentials(
     $service_account_name,
-    array(Google_Service_Groupssettings::APPS_GROUPS_SETTINGS),
+    array(
+      Google_Service_Groupssettings::APPS_GROUPS_SETTINGS,
+      Google_Service_Directory::ADMIN_DIRECTORY_GROUP,
+      Google_Service_Directory::ADMIN_DIRECTORY_GROUP_READONLY,
+      Google_Service_Books::BOOKS,
+    ),
     $key
   );
   $client->setAssertionCredentials($cred);
@@ -56,10 +66,35 @@ if ($service_account_info) {
   $_SESSION['service_token'] = $client->getAccessToken();
 }
 
-// Let's ask for some information about a group!
+print("Get books service.\n");
+
+$service = new Google_Service_Books($client);
+
+print("Call books service:\n");
+
+$optParams = array('filter' => 'free-ebooks');
+$results = $service->volumes->listVolumes('Henry David Thoreau', $optParams);
+echo "### Results Of Call:\n";
+foreach ($results as $item) {
+  echo $item['volumeInfo']['title'], "\n";
+}
+
+print("Get directory service.\n");
+
+$service = new Google_Service_Directory($client);
+
+
+print("Call directory service:\n");
+
+$data = $service->groups->get("west-webminister@westkingdom.org");
+var_export($data);
+
+exit(0);
+
 $service = new Google_Service_Groupssettings($client);
 
 $data = $service->groups->get("west-webminister@westkingdom.org");
+//$data = $service->groups->get("02pta16n2up3ah0");
 
 var_export($data);
 exit(0);

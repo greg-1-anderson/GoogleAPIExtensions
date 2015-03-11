@@ -123,10 +123,27 @@ print("\n");
 // See: https://groups.google.com/forum/#!msg/google-apps-manager/EUz1aYmrnX4/zVe2tvnkqVoJ
 // Also, on this page: https://admin.google.com/westkingdom.org/AdminHome#GroupDetails:groupEmail=west-webminister%2540westkingdom.org&flyout=rolesPermissions
 // It says: If Groups for Business is activated later: The selected access level setting will include additional features
+//
+// Turned on Groups for Business.  This error went away.
+// Now, the get call says:
+// PHP Fatal error:  Uncaught exception 'Google_Service_Exception' with message 'Invalid json in service response:
+//   <entry xmlns="http://www.w3.org/2005/Atom" xmlns:apps="http://schemas.google.com/apps/2006" xmlns:gd="http://schemas.google.com/g/2005">
+//     <id>tag:googleapis.com,2010:apps:groupssettings:GROUP:west-webminister@westkingdom.org</id>
+// [trimmed]
+// n.b. output is xml instead of html
 $service = new Google_Service_Groupssettings($client);
 
+
+$settingData = new Google_Service_Groupssettings_Groups();
+
+// INVITED_CAN_JOIN or CAN_REQUEST_TO_JOIN, etc.
+$settingData->setWhoCanJoin("CAN_REQUEST_TO_JOIN");
+// ALL_MANAGERS_CAN_POST, ALL_IN_DOMAIN_CAN_POST, etc.
+//$settingData->setWhoCanPostMessage("ALL_IN_DOMAIN_CAN_POST");
+
+$data = $service->groups->patch("west-webminister@westkingdom.org", $settingData);
+
 $data = $service->groups->get("west-webminister@westkingdom.org");
-//$data = $service->groups->get("02pta16n2up3ah0");
 
 var_export($data);
 print("\n");

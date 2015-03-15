@@ -111,7 +111,6 @@ $groupManager = new Groups($existingState);
 $newState = $existingState;
 $newState['west']['lists']['webminister']['members'][] = 'new.admin@somewhere.com';
 
-$auth = array();
 
 $groupManager->update($client, $newState);
 

@@ -34,38 +34,57 @@ if ($api_key) {
   $client->setDeveloperKey($api_key);
 }
 
-print("Set authentication information.\n");
-
 // If we have a service account, that will give us even more access.
 if ($service_account_info) {
-  var_export($service_account_info);
-  print("\n");
-
   $client_id = $service_account_info['client-id'];
   $service_account_name = $service_account_info['email-address'];
   $key_file_location = $service_account_info['key-file'];
+  $key_file_password = $service_account_info['key-file-password'];
 
   if (isset($_SESSION['service_token'])) {
     $client->setAccessToken($_SESSION['service_token']);
   }
   $key = file_get_contents($key_file_location);
 
-  // https://www.googleapis.com/auth/admin.directory.group, https://www.googleapis.com/auth/admin.directory.group.readonly, https://www.googleapis.com/auth/admin.directory.group.member, https://www.googleapis.com/auth/admin.directory.group.member.readonly, https://www.googleapis.com/auth/apps.groups.settings, https://www.googleapis.com/auth/books
+  // https://www.googleapis.com/auth/books, https://www.googleapis.com/auth/admin.directory.group, https://www.googleapis.com/auth/admin.directory.group.readonly, https://www.googleapis.com/auth/admin.directory.group.member, https://www.googleapis.com/auth/admin.directory.group.member.readonly, https://www.googleapis.com/auth/apps.groups.settings, https://www.googleapis.com/auth/admin.directory.notifications, https://www.googleapis.com/auth/admin.directory.orgunit, https://www.googleapis.com/auth/admin.directory.orgunit.readonly, https://www.googleapis.com/auth/admin.directory.user, https://www.googleapis.com/auth/admin.directory.user.alias, https://www.googleapis.com/auth/admin.directory.user.alias.readonly, https://www.googleapis.com/auth/admin.directory.user.readonly, https://www.googleapis.com/auth/admin.directory.user.security, https://www.googleapis.com/auth/admin.directory.userschema, https://www.googleapis.com/auth/admin.directory.userschema.readonly, https://www.googleapis.com/auth/calendar, https://www.googleapis.com/auth/calendar.readonly
   $cred = new Google_Auth_AssertionCredentials(
     $service_account_name,
     array(
+      // Books is only for testing.  The rest I think we actually need.
+      Google_Service_Books::BOOKS,
+
       Google_Service_Groupssettings::APPS_GROUPS_SETTINGS,
+
       Google_Service_Directory::ADMIN_DIRECTORY_GROUP,
       Google_Service_Directory::ADMIN_DIRECTORY_GROUP_READONLY,
 
       Google_Service_Directory::ADMIN_DIRECTORY_GROUP_MEMBER,
       Google_Service_Directory::ADMIN_DIRECTORY_GROUP_MEMBER_READONLY,
 
-      Google_Service_Books::BOOKS,
+      Google_Service_Directory::ADMIN_DIRECTORY_NOTIFICATIONS,
+
+      Google_Service_Directory::ADMIN_DIRECTORY_ORGUNIT,
+      Google_Service_Directory::ADMIN_DIRECTORY_ORGUNIT_READONLY,
+
+      Google_Service_Directory::ADMIN_DIRECTORY_USER,
+      Google_Service_Directory::ADMIN_DIRECTORY_USER_READONLY,
+
+      Google_Service_Directory::ADMIN_DIRECTORY_USER_ALIAS,
+      Google_Service_Directory::ADMIN_DIRECTORY_USER_ALIAS_READONLY,
+
+      Google_Service_Directory::ADMIN_DIRECTORY_USER_SECURITY,
+
+      Google_Service_Directory::ADMIN_DIRECTORY_USERSCHEMA,
+      Google_Service_Directory::ADMIN_DIRECTORY_USERSCHEMA_READONLY,
+
+      Google_Service_Calendar::CALENDAR,
+      Google_Service_Calendar::CALENDAR_READONLY,
+
     ),
     $key,
-    'notasecret'
+    $key_file_password
   );
+
   //
   // Very important step:  the service account must also declare the
   // identity (via email address) of a user with admin priviledges that
@@ -80,6 +99,27 @@ if ($service_account_info) {
   }
   $_SESSION['service_token'] = $client->getAccessToken();
 }
+
+
+$groupData = file_get_contents(dirname(__FILE__) . "/sample_data/westkingdom.org.yaml");
+$parsed = Yaml::parse($groupData);
+// Throw away the first top-level key, use all of the data under it. Ignore any other top-level keys.
+$existingState = array_pop($parsed);
+
+$groupManager = new Groups($existingState);
+
+$newState = $existingState;
+$newState['west']['lists']['webminister']['members'][] = 'new.admin@somewhere.com';
+
+$auth = array();
+
+$groupManager->update($client, $newState);
+
+exit(0);
+
+
+$domain = "westkingdom.org";
+$group_email = "west-webminister@$domain";
 
 print("Get books service.\n");
 
@@ -103,61 +143,133 @@ $service = new Google_Service_Directory($client);
 print("Call directory service:\n");
 
 // Get info about a group
-$data = $service->groups->get("west-webminister@westkingdom.org");
+$data = $service->groups->get($group_email);
 var_export($data);
 print("\n");
+
+// TEMPORARY
+$service->users->delete("first.last@$domain");
+
+$user = new Google_Service_Directory_User(array(
+    'name' => array(
+      'familyName' => 'Firstname',
+      'givenName' => 'Lastname',
+    ),
+    'primaryEmail' => "first.last@$domain",
+    'password' => sha1('secretsecret'),
+    'hashfunction' => 'SHA-1',
+  ));
+
+$service->users->insert($user);
+
+
+
+$data = $service->users->get("first.last@$domain");
+var_export($data);
+print("\n");
+
+
+/*
+  public $addresses;
+  public $agreedToTerms;
+  public $aliases;
+  public $changePasswordAtNextLogin;
+  public $creationTime;
+  public $customSchemas;
+  public $customerId;
+  public $deletionTime;
+  public $emails;
+  public $etag;
+  public $externalIds;
+  public $hashFunction;
+  public $id;
+  public $ims;
+  public $includeInGlobalAddressList;
+  public $ipWhitelisted;
+  public $isAdmin;
+  public $isDelegatedAdmin;
+  public $isMailboxSetup;
+  public $kind;
+  public $lastLoginTime;
+  protected $nameType = 'Google_Service_Directory_UserName';
+  protected $nameDataType = '';
+  public $nonEditableAliases;
+  public $orgUnitPath;
+  public $organizations;
+  public $password;
+  public $phones;
+  public $primaryEmail;
+  public $relations;
+  public $suspended;
+  public $suspensionReason;
+  public $thumbnailPhotoUrl;
+*/
+
+
+$member = new Google_Service_Directory_Member(array(
+                        'email' =>"first.last@$domain",
+                        'role' => 'MEMBER',
+                        'type' => 'USER'));
+$service->members->insert($group_email, $member);
+
 
 // Get members of a group
-$data = $service->members->listMembers("west-webminister@westkingdom.org");
+$data = $service->members->listMembers($group_email);
 var_export($data);
 print("\n");
 
+$service->members->delete($group_email, "first.last@$domain");
+
+
+$newgroup = new Google_Service_Directory_Group(array(
+        'email' => "test-group@$domain",
+        'name' => 'This is a test group',
+  ));
+
+$service->groups->insert($newgroup);
+
+
+$data = $service->groups->delete("test-group@$domain");
+
+
+$newalias = new Google_Service_Directory_Alias(array(
+  'alias' => "uber-seneschal@$domain",
+  ));
+$service->groups_aliases->insert("west-seneschal@$domain", $newalias);
+
+
+// n.b. inserting an alias also adds a non-editable alias, but deleting
+// an alias does not delete its non-editable counterpart.
+$service->groups_aliases->delete("west-seneschal@$domain", "uber-seneschal@$domain");
+
 // List all the groups
-$opt = array('domain' => 'westkingdom.org');
+$opt = array('domain' => "$domain");
 $data = $service->groups->listGroups($opt);
 var_export($data);
 print("\n");
 
-// The group settings APIs are still failing with an error:
-//   Domain cannot use Api, Groups service is not installed.
-// See: https://groups.google.com/forum/#!msg/google-apps-manager/EUz1aYmrnX4/zVe2tvnkqVoJ
-// Also, on this page: https://admin.google.com/westkingdom.org/AdminHome#GroupDetails:groupEmail=west-webminister%2540westkingdom.org&flyout=rolesPermissions
-// It says: If Groups for Business is activated later: The selected access level setting will include additional features
-//
-// Turned on Groups for Business.  This error went away.
-// Now, the get call says:
-// PHP Fatal error:  Uncaught exception 'Google_Service_Exception' with message 'Invalid json in service response:
-//   <entry xmlns="http://www.w3.org/2005/Atom" xmlns:apps="http://schemas.google.com/apps/2006" xmlns:gd="http://schemas.google.com/g/2005">
-//     <id>tag:googleapis.com,2010:apps:groupssettings:GROUP:west-webminister@westkingdom.org</id>
-// [trimmed]
-// n.b. output is xml instead of html
-$service = new Google_Service_Groupssettings($client);
+$service->users->delete("first.last@$domain");
 
+$service = new Google_Service_Groupssettings($client);
 
 $settingData = new Google_Service_Groupssettings_Groups();
 
-// INVITED_CAN_JOIN or CAN_REQUEST_TO_JOIN, etc.
-$settingData->setWhoCanJoin("CAN_REQUEST_TO_JOIN");
-// ALL_MANAGERS_CAN_POST, ALL_IN_DOMAIN_CAN_POST, etc.
-//$settingData->setWhoCanPostMessage("ALL_IN_DOMAIN_CAN_POST");
-
-$data = $service->groups->patch("west-webminister@westkingdom.org", $settingData);
-
-$data = $service->groups->get("west-webminister@westkingdom.org");
+// Some API calls require that we request that the returned data be
+// sent as JSON.  The PHP API for the Google Apps API only works with
+// JSON, but some calls default to returning XML.
+$opt_params = array(
+  'alt' => "json"
+);
+$data = $service->groups->get($group_email, $opt_params);
 
 var_export($data);
 print("\n");
-exit(0);
 
-$groupData = file_get_contents(dirname(__FILE__) . "/sample_data/westkingdom.org.yaml");
-$parsed = Yaml::parse($groupData);
-$existingState = $parsed['smartlist::subdomain_lists'];
+// INVITED_CAN_JOIN or CAN_REQUEST_TO_JOIN, etc.
+$settingData->setWhoCanJoin("CAN_REQUEST_TO_JOIN");
+// ALL_MANAGERS_CAN_POST, ALL_IN_DOMAIN_CAN_POST, works
+// ANYONE_CAN_POST returns 'permission denied'.
+$settingData->setWhoCanPostMessage("ANYONE_CAN_POST");
 
-$groupManager = new Groups($existingState);
+$data = $service->groups->patch($group_email, $settingData);
 
-$newState = $existingState;
-$newState['west']['lists']['webminister']['members'][] = 'new.admin@somewhere.com';
-
-$auth = array();
-
-$groupManager->update($client, $newState);

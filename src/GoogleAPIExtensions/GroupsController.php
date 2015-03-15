@@ -1,4 +1,6 @@
-namespace GoogleAPIExtensions;
+<?php
+
+namespace Westkingdom\GoogleAPIExtensions;
 
 interface GroupsController {
   function insertBranch($branch);

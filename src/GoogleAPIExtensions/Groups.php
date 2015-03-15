@@ -1,6 +1,6 @@
 <?php
 
-namespace GoogleAPIExtensions;
+namespace Westkingdom\GoogleAPIExtensions;
 
 class Groups {
   protected $existingState = array();

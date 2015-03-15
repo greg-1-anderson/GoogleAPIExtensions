@@ -100,22 +100,7 @@ if ($service_account_info) {
   $_SESSION['service_token'] = $client->getAccessToken();
 }
 
-
-$groupData = file_get_contents(dirname(__FILE__) . "/sample_data/westkingdom.org.yaml");
-$parsed = Yaml::parse($groupData);
-// Throw away the first top-level key, use all of the data under it. Ignore any other top-level keys.
-$existingState = array_pop($parsed);
-
-$groupManager = new Groups($existingState);
-
-$newState = $existingState;
-$newState['west']['lists']['webminister']['members'][] = 'new.admin@somewhere.com';
-
-
-$groupManager->update($client, $newState);
-
-exit(0);
-
+// Test the actual Google API
 
 $domain = "westkingdom.org";
 $group_email = "west-webminister@$domain";

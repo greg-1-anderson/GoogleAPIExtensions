@@ -2,17 +2,24 @@
 
 namespace Westkingdom\GoogleAPIExtensions;
 
+use WestKingdom\GoogleAPIExtensions\GroupsController;
+
 class Groups {
   protected $existingState = array();
+  protected $ctrl;
 
-  function __construct($state) {
+  /**
+   * @param $ctrl control object that does actual actions
+   * @param $state initial state
+   */
+  function __construct(GroupsController $ctrl, $state) {
+    $this->ctrl = $ctrl;
     $this->existingState = $state;
   }
 
   /**
    * Update our group memberships
    *
-   * @param $ctrl control object that does actual actions
    *
    * @param $memberships nested associative array
    *    BRANCHES contain LISTS and ALIASES.
@@ -37,7 +44,7 @@ class Groups {
    *    expected to keep an archive of all email that is sent to it,
    *    and an alias just passes the email through.
    */
-  function update(GroupsController $ctrl, $memberships) {
+  function update($memberships) {
     //var_export($this->existingState);
     //var_export($memberships);
 
@@ -53,69 +60,69 @@ class Groups {
 
       // Next, update or insert, depending on whether this branch is new.
       if (array_key_exists($branch, $this->existingState)) {
-        $this->updateBranch($ctrl, $branch, $offices, $this->exisitngState[$branch]);
+        $this->updateBranch($branch, $offices, $this->existingState[$branch]);
       }
       else {
-        $this->insertBranch($ctrl, $branch, $offices);
+        $this->insertBranch($branch, $offices);
       }
     }
     // Finally, delete any branch that is no longer with us.
     foreach ($this->existingState as $branch => $offices) {
       if (!array_key_exists($branch, $memberships)) {
-        $this->deleteBranch($ctrl, $branch, $offices);
+        $this->deleteBranch($branch, $offices);
       }
     }
     $this->existingState = $memberships;
   }
 
-  function updateBranch(GroupsController $ctrl, $branch, $updateOffices, $existingOffices) {
-    foreach ($updateoffices as $officename => $members) {
+  function updateBranch($branch, $updateOffices, $existingOffices) {
+    foreach ($updateOffices as $officename => $members) {
       $members = $this->normalizeMembershipData($members);
       if (array_key_exists($officename, $existingOffices)) {
-        $this->updateOffice($ctrl, $branch, $officename, $members, $existingOffices[$officename]);
+        $this->updateOffice($branch, $officename, $members, $existingOffices[$officename]);
       }
       else {
-        $this->insertOffice($ctrl, $branch, $officename, $members);
+        $this->insertOffice($branch, $officename, $members);
       }
     }
     foreach ($existingOffices as $officename => $members) {
       if (!array_key_exists($officenmae, $updateOffices)) {
-        $this->deleteOffice($ctrl, $branch, $officename, $members);
+        $this->deleteOffice($branch, $officename, $members);
       }
     }
   }
 
-  function insertBranch(GroupsController $ctrl, $branch, $newOffices) {
-    $ctrl->insertBranch($branch);
-    $this->updateBranch($ctrl, $branch, $newOffices, array());
+  function insertBranch($branch, $newOffices) {
+    $this->ctrl->insertBranch($branch);
+    $this->updateBranch($branch, $newOffices, array());
   }
 
-  function deleteBranch(GroupsController $ctrl, $branch, $removingOffices) {
-    $this->updateBranch($ctrl, $branch, array(), $removingOffices);
-    $ctrl->deleteBranch($branch);
+  function deleteBranch($branch, $removingOffices) {
+    $this->updateBranch($branch, array(), $removingOffices);
+    $this->ctrl->deleteBranch($branch);
   }
 
-  function updateOffice(GroupsController $ctrl, $branch, $officename, $updateMembers, $existingMembers) {
+  function updateOffice($branch, $officename, $updateMembers, $existingMembers) {
     foreach ($updateMembers['members'] as $emailAddress) {
       if (!in_array($emailAddress, $existingMembers['members'])) {
-        $ctrl->insertMember($branch, $officename, $emailAddress);
+        $this->ctrl->insertMember($branch, $officename, $emailAddress);
       }
     }
     foreach ($existingMembers['members'] as $emailAddress) {
       if (!in_array($emailAddress, $updateMembers['members'])) {
-        $ctrl->removeMember($branch, $officename, $emailAddress);
+        $this->ctrl->removeMember($branch, $officename, $emailAddress);
       }
     }
   }
 
-  function insertOffice(GroupsController $ctrl, $branch, $officename, $newMembers) {
-    $ctrl->insertOffice($branch, $officename, $newMembers['settings']);
-    $this->updateOffice($ctrl, $branch, $officename, $newMembers, array());
+  function insertOffice($branch, $officename, $newMembers) {
+    $this->ctrl->insertOffice($branch, $officename, $newMembers['settings']);
+    $this->updateOffice($branch, $officename, $newMembers, array());
   }
 
-  function deleteOffice(GroupsController $ctrl, $branch, $officename, $removingMembers) {
-    $this->updateOffice($ctrl, $branch, $officename, array(), $removeingMembers);
-    $ctrl->deleteOffice($branch, $officename, $removingMembers['settings']);
+  function deleteOffice($branch, $officename, $removingMembers) {
+    $this->updateOffice($branch, $officename, array(), $removeingMembers);
+    $this->ctrl->deleteOffice($branch, $officename, $removingMembers['settings']);
   }
 
   /**
@@ -144,11 +151,11 @@ class Groups {
    * A simple string is treated like an array of one element.
    */
   function normalizeMembershipData($data) {
-    if (isstring($data)) {
-      return normalizeMembershipArrayData(array($data));
+    if (is_string($data)) {
+      return $this->normalizeMembershipArrayData(array($data));
     }
     else {
-      return normalizeMembershipArrayData(array($data));
+      return $this->normalizeMembershipArrayData(array($data));
     }
   }
 

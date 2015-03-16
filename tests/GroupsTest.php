@@ -3,6 +3,7 @@
 use Westkingdom\GoogleAPIExtensions\Groups;
 use Prophecy\PhpUnit\ProphecyTestCase;
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\Yaml\Dumper;
 
 class GroupsTestCase extends ProphecyTestCase {
 
@@ -17,8 +18,62 @@ class GroupsTestCase extends ProphecyTestCase {
     $this->existingState = array_pop($parsed);
   }
 
-  public function testGroupUpdate()
-  {
+  public function testNormalize() {
+    $data = Yaml::parse("
+north:
+  lists:
+    president:
+      - bill@whitehouse.gov
+    secretary:
+      - george@whitehouse.gov
+  aliases:
+    all:
+      - president@north.whitehouse.gov
+      - secretary@north.whitehouse.gov");
+
+    $normalized = Groups::normalize($data);
+
+    $expected = "
+north:
+  lists:
+    president:
+      members:
+        - bill@whitehouse.gov
+      properties: {  }
+    secretary:
+      members:
+        - george@whitehouse.gov
+      properties: {  }
+    all:
+      members:
+        - president@north.whitehouse.gov
+        - secretary@north.whitehouse.gov
+      properties:
+        forward-only: true";
+
+    $this->assertYamlEquals($normalized, trim($expected));
+  }
+
+  public function assertYamlEquals($data, $expected) {
+    $this->assertEquals($this->arrayToYaml($data), $this->arrayToYaml($expected));
+  }
+
+  public function arrayToYaml($data) {
+    if (is_string($data)) {
+      return trim($data);
+    }
+    else {
+      // Convert data to YAML
+      $dumper = new Dumper();
+      $dumper->setIndentation(2);
+      return trim($dumper->dump($data, PHP_INT_MAX));
+    }
+  }
+
+  public function testGroupUpdate() {
+    // Do a nominal test to check to see that our test data loaded
+    $this->assertEquals(implode(',', array_keys($this->existingState)), 'west,mists');
+
     // Create a new state object by copying our existing state and adding
     // a member to the "west-webminister" group.
     $newState = $this->existingState;

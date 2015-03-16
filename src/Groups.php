@@ -14,7 +14,7 @@ class Groups {
    */
   function __construct(GroupsController $ctrl, $state) {
     $this->ctrl = $ctrl;
-    $this->existingState = $state;
+    $this->existingState = $this->normalize($state);
   }
 
   /**
@@ -47,17 +47,10 @@ class Groups {
   function update($memberships) {
     //var_export($this->existingState);
     //var_export($memberships);
+    $memberships = $this->normalize($memberships);
 
-    foreach ($memberships as $branch => $officesListsAndAliases) {
-      // First, normalize the offices data
-      $offices = array();
-      if (array_key_exists('lists', $officesListsAndAliases)) {
-        $offices = $officesListsAndAliases['lists'];
-      }
-      if (array_key_exists('aliases', $offices)) {
-        $offices += $this->normalizeAliasData($officesListsAndAliases['aliases']);
-      }
-
+    foreach ($memberships as $branch => $officesLists) {
+      $offices = $officesLists['lists'];
       // Next, update or insert, depending on whether this branch is new.
       if (array_key_exists($branch, $this->existingState)) {
         $this->updateBranch($branch, $offices, $this->existingState[$branch]);
@@ -77,9 +70,8 @@ class Groups {
 
   function updateBranch($branch, $updateOffices, $existingOffices) {
     foreach ($updateOffices as $officename => $members) {
-      $members = $this->normalizeMembershipData($members);
       if (array_key_exists($officename, $existingOffices)) {
-        $this->updateOffice($branch, $officename, $members, $existingOffices[$officename]);
+        $this->updateOffice($branch, $officename, $members, $existingOffices[$officename]['members']);
       }
       else {
         $this->insertOffice($branch, $officename, $members);
@@ -116,24 +108,47 @@ class Groups {
   }
 
   function insertOffice($branch, $officename, $newMembers) {
-    $this->ctrl->insertOffice($branch, $officename, $newMembers['settings']);
+    $this->ctrl->insertOffice($branch, $officename, $newMembers['properties']);
     $this->updateOffice($branch, $officename, $newMembers, array());
   }
 
   function deleteOffice($branch, $officename, $removingMembers) {
     $this->updateOffice($branch, $officename, array(), $removeingMembers);
-    $this->ctrl->deleteOffice($branch, $officename, $removingMembers['settings']);
+    $this->ctrl->deleteOffice($branch, $officename, $removingMembers['properties']);
+  }
+
+  static function normalize($state) {
+    $result = array();
+    foreach ($state as $branch => $listsAndAliases) {
+      $result[$branch] = Groups::normalizeListsAndAliases($listsAndAliases);
+    }
+    return $result;
+  }
+
+  static function normalizeListsAndAliases($listsAndAliases) {
+    // First, normalize the offices data
+    $offices = array('lists' => array());
+    if (array_key_exists('lists', $listsAndAliases)) {
+      $offices['lists'] = Groups::normalizeGroupsData($listsAndAliases['lists']);
+    }
+    if (array_key_exists('aliases', $listsAndAliases)) {
+      $default = array(
+        'forward-only' => TRUE,
+      );
+      $offices['lists'] += Groups::normalizeGroupsData($listsAndAliases['aliases'], $default);
+    }
+    return $offices;
   }
 
   /**
    * Convert the alias data into a format that can be merged
    * in with the lists.
    */
-  function normalizeAliasData($aliasGroups) {
+  static function normalizeGroupsData($aliasGroups, $default = array()) {
     $result = array();
     foreach ($aliasGroups as $office => $data) {
-      $data = $this->normalizeMembershipData($data);
-      $data['settings']['forward-only'] = TRUE;
+      $data = Groups::normalizeMembershipData($data);
+      $data['properties'] += $default;
       $result[$office] = $data;
     }
     return $result;
@@ -150,12 +165,12 @@ class Groups {
    *
    * A simple string is treated like an array of one element.
    */
-  function normalizeMembershipData($data) {
+  static function normalizeMembershipData($data) {
     if (is_string($data)) {
-      return $this->normalizeMembershipArrayData(array($data));
+      return Groups::normalizeMembershipArrayData(array($data));
     }
     else {
-      return $this->normalizeMembershipArrayData(array($data));
+      return Groups::normalizeMembershipArrayData($data);
     }
   }
 
@@ -164,13 +179,13 @@ class Groups {
    * an array with just a 'members' element containing all
    * of the original data contents.
    */
-  function normalizeMembershipArrayData($data) {
+  static function normalizeMembershipArrayData($data) {
     if (array_key_exists('members', $data)) {
-      return $data + array('settings' => array());
+      return $data + array('properties' => array());
     }
     else {
       // TODO: confirm that all of the keys of $data are numeric.
-      return array('members' => $data, 'settings' => array());
+      return array('members' => $data, 'properties' => array());
     }
   }
 }

@@ -13,6 +13,8 @@
           - nutxxx@sca.org
           - lucxxx@sca.org
           - robxxx@sca.org
+        properties:
+          group-name: West Kingdom Web Minister
       gold-key:
         members:
           - stexxx@sca.org

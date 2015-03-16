@@ -53,7 +53,7 @@ class Groups {
       $offices = $officesLists['lists'];
       // Next, update or insert, depending on whether this branch is new.
       if (array_key_exists($branch, $this->existingState)) {
-        $this->updateBranch($branch, $offices, $this->existingState[$branch]);
+        $this->updateBranch($branch, $offices, $this->existingState[$branch]['lists']);
       }
       else {
         $this->insertBranch($branch, $offices);
@@ -69,17 +69,17 @@ class Groups {
   }
 
   function updateBranch($branch, $updateOffices, $existingOffices) {
-    foreach ($updateOffices as $officename => $members) {
+    foreach ($updateOffices as $officename => $officeData) {
       if (array_key_exists($officename, $existingOffices)) {
-        $this->updateOffice($branch, $officename, $members, $existingOffices[$officename]['members']);
+        $this->updateOffice($branch, $officename, $officeData['members'], $existingOffices[$officename]['members']);
       }
       else {
-        $this->insertOffice($branch, $officename, $members);
+        $this->insertOffice($branch, $officename, $officeData);
       }
     }
-    foreach ($existingOffices as $officename => $members) {
-      if (!array_key_exists($officenmae, $updateOffices)) {
-        $this->deleteOffice($branch, $officename, $members);
+    foreach ($existingOffices as $officename => $officeData) {
+      if (!array_key_exists($officename, $updateOffices)) {
+        $this->deleteOffice($branch, $officename, $officeData);
       }
     }
   }
@@ -95,26 +95,26 @@ class Groups {
   }
 
   function updateOffice($branch, $officename, $updateMembers, $existingMembers) {
-    foreach ($updateMembers['members'] as $emailAddress) {
-      if (!in_array($emailAddress, $existingMembers['members'])) {
+    foreach ($updateMembers as $emailAddress) {
+      if (!in_array($emailAddress, $existingMembers)) {
         $this->ctrl->insertMember($branch, $officename, $emailAddress);
       }
     }
-    foreach ($existingMembers['members'] as $emailAddress) {
-      if (!in_array($emailAddress, $updateMembers['members'])) {
+    foreach ($existingMembers as $emailAddress) {
+      if (!in_array($emailAddress, $updateMembers)) {
         $this->ctrl->removeMember($branch, $officename, $emailAddress);
       }
     }
   }
 
-  function insertOffice($branch, $officename, $newMembers) {
-    $this->ctrl->insertOffice($branch, $officename, $newMembers['properties']);
-    $this->updateOffice($branch, $officename, $newMembers, array());
+  function insertOffice($branch, $officename, $officeData) {
+    $this->ctrl->insertOffice($branch, $officename, $officeData['properties']);
+    $this->updateOffice($branch, $officename, $officeData['members'], array());
   }
 
-  function deleteOffice($branch, $officename, $removingMembers) {
-    $this->updateOffice($branch, $officename, array(), $removeingMembers);
-    $this->ctrl->deleteOffice($branch, $officename, $removingMembers['properties']);
+  function deleteOffice($branch, $officename, $officeData) {
+    $this->updateOffice($branch, $officename, array(), $officeData['members']);
+    $this->ctrl->deleteOffice($branch, $officename, $officeData['properties']);
   }
 
   static function normalize($state) {

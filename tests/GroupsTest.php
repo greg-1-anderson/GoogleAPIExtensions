@@ -75,7 +75,7 @@ north:
     $this->assertEquals(implode(',', array_keys($this->initialState)), 'west,mists');
   }
 
-  public function testGroupUpdate() {
+  public function testInsertMember() {
     // Do a nominal test to check to see that our test data loaded
     $this->assertEquals(implode(',', array_keys($this->initialState)), 'west,mists');
 
@@ -92,7 +92,30 @@ north:
     // Prophesize that the new user will be added to the west webministers group.
     $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "webminister", "new.admin@somewhere.com"));
 
-    // Run the tests.  The prophecies are checked against actual
+    // Update the group.  The prophecies are checked against actual
+    // behavior during teardown.
+    $groupManager->update($newState);
+  }
+
+  public function testRemoveMember() {
+    // Do a nominal test to check to see that our test data loaded
+    $this->assertEquals(implode(',', array_keys($this->initialState)), 'west,mists');
+
+    // Create a new state object by copying our existing state and adding
+    // a member to the "west-webminister" group.
+    $newState = $this->initialState;
+    array_pop($newState['west']['lists']['webminister']['members']);
+
+    // Create a new test controller prophecy, and reveal it to the
+    // Groups object we are going to test.
+    $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
+    $groupManager = new Westkingdom\GoogleAPIExtensions\Groups($testController->reveal(), $this->initialState);
+
+    // Prophesize that a user will be removed from the west webministers group,
+    // and then removed again
+    $testController->removeMember()->shouldBeCalled()->withArguments(array("west", "webminister", "robxxx@sca.org"));
+
+    // Update the group.  The prophecies are checked against actual
     // behavior during teardown.
     $groupManager->update($newState);
   }

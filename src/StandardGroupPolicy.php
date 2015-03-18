@@ -5,6 +5,30 @@ namespace Westkingdom\GoogleAPIExtensions;
 /**
  * Use this groups controller with Westkingdom\GoogleAPIExtensions\Groups
  * to update groups and group memberships directly in Google Apps.
+ *
+ * The Standard Group Policy has some reasonable defaults that may
+ * be overridden by the caller using its simple templating system.
+ * If the templating system is not flexible enough, extend StandardGroupPolicy
+ * and replace methods as needed.
+ *
+ * When a group policy is called, it is provided with a set of
+ * properties, which are stored in a simple associative array
+ * (key => value).  If any returned value contains substitution
+ * expressions, these will be replaced with the value of the
+ * properties they name.
+ *
+ * Substitutions can be expressed in two forms:
+ *
+ * $(name) - returns the value of the property 'name'
+ * ${name} - as above, but value passed through ucfirst()
+ *
+ * Examples:
+ *
+ *       'group-name'  => '${branch} ${office}',
+ *       'group-email' => '$(branch)-$(office)@$(domain)',
+ *
+ * These can be overridden using the $defaults parameter
+ * to the StandardGroupPolicy constructor.
  */
 class StandardGroupPolicy implements GroupPolicy {
   protected $defaults;

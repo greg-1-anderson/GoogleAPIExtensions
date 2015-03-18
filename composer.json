@@ -12,6 +12,11 @@
       "Westkingdom\\GoogleAPIExtensions\\":    "src"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Westkingdom\\GoogleAPIExtensions\\":    "tests"
+    }
+  },
   "extra": {
     "branch-alias": {
         "dev-master": "1.0.x-dev"

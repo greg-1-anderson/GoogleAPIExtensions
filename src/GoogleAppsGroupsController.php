@@ -9,8 +9,8 @@ namespace Westkingdom\GoogleAPIExtensions;
  * Batch mode is always used.  You may provide your own batch object,
  * in which case you should call $client->setUseBatch(true) and
  * $batch->execute() yourself.  If you do not provide a batch object,
- * then one will be created in the constructor for you.  You must
- * call GoogleAppsGroupsController::execute() when done updating.
+ * then one will be created in the constructor for you, and its
+ * execute() method will be called at the end of the update.
  */
 class GoogleAppsGroupsController implements GroupsController {
   protected $client;
@@ -18,6 +18,7 @@ class GoogleAppsGroupsController implements GroupsController {
   protected $directoryService;
   protected $groupSettingsService;
   protected $groupPolicy;
+  protected $autoExecute = FALSE;
 
   /**
    * @param $client Google Apps API client object
@@ -31,6 +32,7 @@ class GoogleAppsGroupsController implements GroupsController {
     if (!isset($batch)) {
       $client->setUseBatch(true);
       $this->batch = new \Google_Http_Batch($client);
+      $this->autoExecute = TRUE;
     }
     $this->directoryService = new \Google_Service_Directory($client);
     $this->groupSettingsService = new \Google_Service_Groupssettings($client);
@@ -109,8 +111,16 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->batch->add($req);
   }
 
+  function begin() {
+  }
+
+  function complete() {
+    if ($this->autoExecute) {
+      $this->execute();
+    }
+  }
+
   function execute() {
     return $this->batch->execute();
   }
 }
-

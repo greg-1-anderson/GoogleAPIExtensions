@@ -91,6 +91,8 @@ north:
 
     // Prophesize that the new user will be added to the west webministers group.
     $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "webminister", "new.admin@somewhere.com"));
+    $testController->begin()->shouldBeCalled();
+    $testController->complete()->shouldBeCalled();
 
     // Update the group.  The prophecies are checked against actual
     // behavior during teardown.
@@ -114,6 +116,8 @@ north:
     // Prophesize that a user will be removed from the west webministers group,
     // and then removed again
     $testController->removeMember()->shouldBeCalled()->withArguments(array("west", "webminister", "robxxx@sca.org"));
+    $testController->begin()->shouldBeCalled();
+    $testController->complete()->shouldBeCalled();
 
     // Update the group.  The prophecies are checked against actual
     // behavior during teardown.

@@ -45,6 +45,7 @@ class Groups {
    *    and an alias just passes the email through.
    */
   function update($memberships) {
+    $this->ctrl->begin();
     //var_export($this->existingState);
     //var_export($memberships);
     $memberships = $this->normalize($memberships);
@@ -66,6 +67,7 @@ class Groups {
       }
     }
     $this->existingState = $memberships;
+    $this->ctrl->complete();
   }
 
   function updateBranch($branch, $updateOffices, $existingOffices) {

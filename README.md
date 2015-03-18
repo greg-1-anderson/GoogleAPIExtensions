@@ -14,18 +14,39 @@ API directly is that this way makes it easier to manage aliases for groups
 of groups, and other inter-group relationships, while minimizing the number
 of remote API calls to Google that need to be made.
 
-Testing the Code
-================
-This library isn't completed yet, but it includes a simple main.php file.
-To use it:
+Running the Tests
+=================
+This library contains a test suite that uses PHPUnit and Prophecy to
+insure that the classes provided here are correct.  The tests exercise
+the Google Apps APIs, but do not make any calls to Google, so it is
+not necessary to set up any authentication credentials just to run the tests.
 
 1. Clone this repository
 1. Run `composer install`
+1. Run `./vendor/bin/phpunit tests`
+
+All of the tests are also run on [Travis CI](https://travis-ci.org/westkingdom/google-api-extensions) on every commit.
+
+Using the Code
+==============
+
+Overview:
+
+1. TODO: publish this library in Packagist so that it can be easily loaded from composer.json.
 1. [Set up your authorization information](http://docs.westkingdom.org/en/latest/google-api/)
-1. Run `php main.php`
+1. Prepare your data in $currentState and $newState
+1. Create a Standard Policy object
+1. Create a Google Client and authenticate with Google
+1. Create a Google Apps Groups Controller
+1. Tell the Groups Controller to update your group
 
-Email Address Sanitization
-==========================
-I sanitized our actual group data by running it through the following filter:
-
-sed -i -e 's#@westkingdom.org#%westkingdom.org#' -e 's#- \([^@][^@][^@]\)[^@]*@.*#- \1xxx@sca.org#' -e 's#%westkingdom.org#@westkingdom.org#' sample_data/westkingdom.org.yaml 
+Example:
+```
+$client = new Google_Client();
+$client->setApplicationName("My application");
+// Authenticate $client
+$policy = new StandardGroupPolicy('mydomain.org');
+$controller = new GoogleAppsGroupsController($client, $policy);
+$groupManager = new Westkingdom\GoogleAPIExtensions\Groups($controller, $currentState);
+$groupManager->update($newState);
+```

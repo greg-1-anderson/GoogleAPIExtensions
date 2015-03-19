@@ -60,15 +60,16 @@ $groupManager->update($newState);
 
 === Include this Library Using Composer
 
-TODO: publish this library in Packagist so that it can be easily loaded 
-from composer.json, like this:
-
+The best way to install this library in your application is to use
+Composer.  Simply add the following line to your composer.json file's
+`require` section:
+```
 {
   "require": {
     "westkingdom/google-api-extensions": "~1"
   }
 }
-
+```
 To use Composer with popular content management systems, please see
 the following resources:
 

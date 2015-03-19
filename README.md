@@ -65,7 +65,7 @@ from composer.json, like this:
 
 {
   "require": {
-    "westkingdom/googleapix": "~1"
+    "westkingdom/google-api-extensions": "~1"
   }
 }
 

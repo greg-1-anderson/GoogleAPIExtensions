@@ -1,4 +1,17 @@
 {
+  "name": "westkingdom/google-api-extensions",
+  "type": "library",
+  "description": "Google Apps API Extensions",
+  "homepage": "https://github.com/westkingdom/google-api-extensions",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Greg Anderson",
+      "email": "greg.1.anderson@greeknowe.org",
+      "homepage": "https://www.drupal.org/u/greg.1.anderson",
+      "role": "Developer"
+    }
+  ],
   "require": {
     "google/apiclient": "1.0.*@beta",
     "symfony/yaml": "~2.2"

@@ -1,4 +1,4 @@
-== Group Management
+## Group Management
 
 Callers may use this class to update their Google Groups memberships
 in bulk.  
@@ -14,7 +14,7 @@ API directly is that this way makes it easier to manage aliases for groups
 of groups, and other inter-group relationships, while minimizing the number
 of remote API calls to Google that need to be made.
 
-== Running the Tests
+## Running the Tests
 
 This library contains a test suite that uses PHPUnit and Prophecy to
 insure that the classes provided here are correct.  The tests exercise
@@ -27,9 +27,9 @@ not necessary to set up any authentication credentials just to run the tests.
 
 All of the tests are also run on [Travis CI](https://travis-ci.org/westkingdom/google-api-extensions) on every commit.
 
-== Using the Code
+## Using the Code
 
-=== Overview
+### Overview
 
 1. Include this Library Using Composer
 1. Set Up Your Authentication Information
@@ -40,7 +40,7 @@ All of the tests are also run on [Travis CI](https://travis-ci.org/westkingdom/g
 1. Create a Google Client and authenticate with Google
 1. Create a Google Apps Groups Controller and Update It
 
-=== Basic Example
+### Basic Example
 
 If you follow the instructions in the following sections, code similar to
 the basic overview shown below should work.
@@ -58,7 +58,7 @@ $groupManager = new Groups($controller, $currentState);
 $groupManager->update($newState);
 ```
 
-=== Include this Library Using Composer
+### Include this Library Using Composer
 
 The best way to install this library in your application is to use
 Composer.  Simply add the following line to your composer.json file's
@@ -81,12 +81,12 @@ Of course, it is possible to use this library without composer; you just
 need to be responsible for setting up the autoloader, or including the
 class files yourself.  However, using Composer is strongly recommended.
 
-=== Set Up Your Authentication Information
+### Set Up Your Authentication Information
 
 Follow the [authorization information setup instructions](http://docs.westkingdom.org/en/latest/google-api/) in the 
 documentation.
 
-=== Prepare Your Data
+### Prepare Your Data
 
 This library expects you to accumulate all of the information about all
 of your groups, and their memberships in a nested heirarchical array.
@@ -94,7 +94,7 @@ of your groups, and their memberships in a nested heirarchical array.
 The structure is shown below in yaml, but you may store it in whatever
 format is most convenient for your application.
 
-=== Create a Service Authenticator
+### Create a Service Authenticator
 
 A service authenticator will help your application load its authentication
 credential information from well-known files, so they do not need to be
@@ -112,18 +112,18 @@ The default searchpath is:
 - .google-api
 - /etc/google-api
 
-=== Authenticate
+### Authenticate
 
 `$client = $authenticator->authenticate($serviceAccount, $scopes, $serviceToken);`
 
-=== Create a Standard Group Policy
+### Create a Standard Group Policy
 
 `$policy = new StandardGroupPolicy('mydomain.org', $defaults);`
 
 'mydomain.org' is the base domain for your Google Apps account.
 `$defaults` contain default values for properties used by the policy.
 
-=== Create a Google Apps Group Controller
+### Create a Google Apps Group Controller
 
 The Google Apps Group Controller is the object that actually talks
 to the Google API.  Batch mode is always used; you can manage the
@@ -141,7 +141,7 @@ $batch->execute();
 If you do not want to manage the batch object, just leave off those
 lines, and the contorller will create and execute batches as needed.
 
-=== Create a Groups Object and Update It
+### Create a Groups Object and Update It
 
 The Groups object is responsible for evaluating how the new state
 differs from the current state.  It then instructs the controller to make

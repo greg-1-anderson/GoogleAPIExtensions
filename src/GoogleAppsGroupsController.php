@@ -51,9 +51,10 @@ class GoogleAppsGroupsController implements GroupsController {
 
   function insertMember($branch, $officename, $memberEmailAddress) {
     $group_id = $this->groupPolicy->getGroupId($branch, $officename);
+    $normalized_email = $this->groupPolicy->normalizeEmail($memberEmailAddress);
 
     $member = new \Google_Service_Directory_Member(array(
-                            'email' => $memberEmailAddress,
+                            'email' => $normalized_email,
                             'role'  => 'MEMBER',
                             'type'  => 'USER'));
 
@@ -63,8 +64,9 @@ class GoogleAppsGroupsController implements GroupsController {
 
   function removeMember($branch, $officename, $memberEmailAddress) {
     $group_id = $this->groupPolicy->getGroupId($branch, $officename);
+    $normalized_email = $this->groupPolicy->normalizeEmail($memberEmailAddress);
 
-    $req = $this->directoryService->members->delete($group_id, $memberEmailAddress);
+    $req = $this->directoryService->members->delete($group_id, $normalized_email);
     $this->batch->add($req);
   }
 
@@ -80,6 +82,13 @@ class GoogleAppsGroupsController implements GroupsController {
     $req = $this->directoryService->groups->insert($newgroup);
     $this->batch->add($req);
 
+    // GOOGLE APPS API BUG (or permissions problem):
+    //
+    // If we alter any settings data at all, then whoCanPost
+    // is changed to "ALL_IN_DOMAIN_CAN_POST".
+    //
+    // Fortunately, the default settings for a group are usable for us.
+/*
     $settingData = new \Google_Service_Groupssettings_Groups();
 
     // INVITED_CAN_JOIN or CAN_REQUEST_TO_JOIN, etc.
@@ -88,11 +97,10 @@ class GoogleAppsGroupsController implements GroupsController {
     // ANYONE_CAN_POST returns 'permission denied'.
     $settingData->setWhoCanPostMessage("ALL_IN_DOMAIN_CAN_POST");
 
-    $req = $this->groupSettingsService->groups->patch($group_email, $settingData);
-    $this->batch->add($req);
-
     $group_id = $this->groupPolicy->getGroupId($branch, $officename);
-    $this->groupSettingsService->groups->patch($group_id, $settingData);
+    $req = $this->groupSettingsService->groups->patch($group_id, $settingData);
+    $this->batch->add($req);
+*/
 
     if (isset($properties['alternate-addresses'])) {
       foreach ($properties['alternate-addresses'] as $alternate_address) {

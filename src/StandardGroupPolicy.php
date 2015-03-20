@@ -78,6 +78,20 @@ class StandardGroupPolicy implements GroupPolicy {
     return $this->getProperty('group-name', $properties);
   }
 
+  /**
+   * Normalize an email address.
+   *
+   * Addresses without a domain are assumed to be in the
+   * primary domain.
+   *
+   * We also convert all addresses to lowercase.
+   */
+  function normalizeEmail($email) {
+    if (strstr($email, "@") === FALSE) {
+      $email .= "@" . $this->getProperty('domain');
+    }
+    return strtolower($email);
+  }
   function availableDefaults() {
     return array_keys($this->defaults);
   }

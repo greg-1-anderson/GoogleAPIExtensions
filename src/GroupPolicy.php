@@ -30,4 +30,9 @@ interface GroupPolicy {
    * set, or "Branch Office" if it is not.
    */
   function getGroupName($branch, $officename, $properties);
+
+  /**
+   * Normalize an email address
+   */
+  function normalizeEmail($email);
 }

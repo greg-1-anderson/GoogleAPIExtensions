@@ -36,21 +36,32 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
     $controller->insertOffice('north', 'president', array());
     $controller->insertMember('north', 'president', 'franklin@testdomain.com');
     $controller->removeMember('north', 'president', 'franklin@testdomain.com');
+    $controller->insertMember('north', 'vice-president', 'Garner');
+    $controller->removeMember('north', 'vice-president', 'Garner');
     $controller->deleteOffice('north', 'president', array());
 
     // The expected list of requests corresponding to the calls above:
+    //
+    // We removed an entry to match a code change to work around a bug
+    // or permissions problem:
+    //
+    //-
+    //  url: /groups/v1/groups/north-president%40testdomain.com
+    //  body: '{"whoCanJoin":"INVITED_CAN_JOIN","whoCanPostMessage":"ALL_IN_DOMAIN_CAN_POST"}'
     $expected = <<< EOT
 -
   url: /admin/directory/v1/groups
   body: '{"email":"north-president@testdomain.com","name":"North President"}'
 -
-  url: /groups/v1/groups/north-president%40testdomain.com
-  body: '{"whoCanJoin":"INVITED_CAN_JOIN","whoCanPostMessage":"ALL_IN_DOMAIN_CAN_POST"}'
--
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members
   body: '{"email":"franklin@testdomain.com","role":"MEMBER","type":"USER"}'
 -
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members/franklin%40testdomain.com
+-
+  url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members
+  body: '{"email":"garner@testdomain.com","role":"MEMBER","type":"USER"}'
+-
+  url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members/garner%40testdomain.com
 -
   url: /admin/directory/v1/groups/north-president%40testdomain.com
 EOT;

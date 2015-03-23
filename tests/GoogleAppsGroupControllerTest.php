@@ -44,18 +44,24 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
     $expected = <<< EOT
 -
   url: /admin/directory/v1/groups
-  postBody: '{"email":"north-president@testdomain.com","name":"North President"}'
+  email: north-president@testdomain.com
+  name: 'North President'
 -
   url: /groups/v1/groups/north-president%40testdomain.com
-  postBody: '{"whoCanJoin":"INVITED_CAN_JOIN","whoCanPostMessage":"ANYONE_CAN_POST"}'
+  whoCanJoin: INVITED_CAN_JOIN
+  whoCanPostMessage: ANYONE_CAN_POST
 -
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members
-  postBody: '{"email":"franklin@testdomain.com","role":"MEMBER","type":"USER"}'
+  email: franklin@testdomain.com
+  role: MEMBER
+  type: USER
 -
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members/franklin%40testdomain.com
 -
   url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members
-  postBody: '{"email":"garner@testdomain.com","role":"MEMBER","type":"USER"}'
+  email: garner@testdomain.com
+  role: MEMBER
+  type: USER
 -
   url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members/garner%40testdomain.com
 -

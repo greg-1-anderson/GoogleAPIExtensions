@@ -1,3 +1,20 @@
+## TOC
+
+1. Group Management
+1. Running the Tests
+1. Using the Code
+  1. Basic Example
+  1. Expanded Example
+  1. Include this Library Using Composer
+  1. Set Up Your Authentication Information
+  1. Prepare your data in $currentState and $newState
+  1. Create a ServiceAccountAuthenticator
+  1. Ask the service account authenticator to authenticate with the appropriate scopes
+  1. Create a Standard Policy object
+  1. Create a Google Client and authenticate with Google
+  1. Create a Google Apps Groups Controller and Update It
+  1. Debugging, logging or prompting
+
 ## Group Management
 
 Callers may use this class to update their Google Groups memberships
@@ -14,6 +31,16 @@ API directly is that this way makes it easier to manage aliases for groups
 of groups, and other inter-group relationships, while minimizing the number
 of remote API calls to Google that need to be made.
 
+For example, imagine what you would have to do to update your group list
+if a user's email address changed.  You'd have to find all of the groups
+the user is a member of, and manually remove the old address and add the
+new one.  Using this API, you can just rebuild all of the data for all
+of the groups, call the 'update' function, and the GroupManager will make
+the minimal number of required updates for you.
+
+In the long run, this should lead to simpler, more maintainable code in
+your application.
+
 ## Running the Tests
 
 This library contains a test suite that uses PHPUnit and Prophecy to
@@ -25,38 +52,47 @@ not necessary to set up any authentication credentials just to run the tests.
 1. Run `composer install`
 1. Run `./vendor/bin/phpunit tests`
 
-All of the tests are also run on [Travis CI](https://travis-ci.org/westkingdom/google-api-extensions) on every commit.
+All of the tests are also run by [Travis CI](https://travis-ci.org/westkingdom/google-api-extensions) on every commit.
 
 ## Using the Code
-
-### Overview
-
-1. Include this Library Using Composer
-1. Set Up Your Authentication Information
-1. Prepare your data in $currentState and $newState
-1. Create a ServiceAccountAuthenticator
-1. Ask the service account authenticator to authenticate with the appropriate scopes
-1. Create a Standard Policy object
-1. Create a Google Client and authenticate with Google
-1. Create a Google Apps Groups Controller and Update It
 
 ### Basic Example
 
 If you follow the instructions in the following sections, code similar to
 the basic overview shown below should work.
 ```
+use Westkingdom\GoogleAPIExtensions\GroupsManager;
+
+$groupsManager = GroupsManager::createForDomain('My application', 'mydomain.org', $currentState);
+$groupsManager->update($newState);
+```
+Even if you use this simple form, you need to understand how this API
+searches for and uses your authentication data, and how to manage the state
+of your data.  See below for more details.
+
+### Expanded Example
+
+If you would like more control over what happens in an update, you can
+construct the internal classes yourself and modify them before making your
+GroupsManager.
+
+```
 use Westkingdom\GoogleAPIExtensions\ServiceAccountAuthenticator;
 use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
 use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
-use Westkingdom\GoogleAPIExtensions\Groups;
+use Westkingdom\GoogleAPIExtensions\GroupsManager;
 
 $authenticator = ServiceAccountAuthenticator("My application");
 $client = $authenticator->authenticate();
 $policy = new StandardGroupPolicy('mydomain.org');
 $controller = new GoogleAppsGroupsController($client, $policy);
-$groupManager = new Groups($controller, $currentState);
+$groupManager = new GroupsManager($controller, $currentState);
 $groupManager->update($newState);
 ```
+
+Note: If you also want to control the behavior of the batch operations,
+you can provide a batch object to the GoogleAppsGroupsController constructor.
+See below for details.
 
 ### Include this Library Using Composer
 
@@ -83,8 +119,8 @@ class files yourself.  However, using Composer is strongly recommended.
 
 ### Set Up Your Authentication Information
 
-Follow the [authorization information setup instructions](http://docs.westkingdom.org/en/latest/google-api/) in the 
-documentation.
+Follow the [authorization information setup instructions](http://docs.westkingdom.org/en/latest/google-api/) on the 
+[documentation website](http://docs.westkingdom.org).
 
 ### Prepare Your Data
 
@@ -93,7 +129,30 @@ of your groups, and their memberships in a nested heirarchical array.
 
 The structure is shown below in yaml, but you may store it in whatever
 format is most convenient for your application.
+```
+GROUPNAME:
+  lists:
+    OFFICENAME:
+      members:
+        - user1@domain1.org
+        - user2@domain2.org
+      properties:
+        group-name: 'Full name of Office'
+```
+Just repeat this structure for as many groups as you have.  If your groups
+are heirarchical in nature, the relationships between the groups is NOT
+represented in your groups state data.  You'll have to keep track of that
+elsewhere.
 
+Note also that it is the responsibility of the caller to keep track of
+the current state and the new state.  The group manager will send updates
+for just the changes that occure in the new state compared to the old state.
+If you do not provide the current state, then groups will never be deleted,
+and group members will never be removed.
+
+Future: The group manager could provide an "export" function to build the
+current state of the groups by calling the Google API.
+        
 ### Create a Service Authenticator
 
 A service authenticator will help your application load its authentication
@@ -155,3 +214,25 @@ $groupManager->update($newState);
 Changes are always made in batch mode.  Batch mode can be handled for
 you, or you can control it yourself, as shown in the previous section.
 
+### Debugging, Logging or Prompting
+
+If you'd like to know what the GroupManager is going to do before it
+does it, you can use a BatchWrapper object.
+
+```
+use Westkingdom\GoogleAPIExtensions\BatchWrapper;
+
+$client->setUseBatch(true);
+$batch = new \Google_Http_Batch($client);
+$batchWrapper = new BatchWrapper($batch);
+$controller = new GoogleAppsGroupsController($client, $policy, $batch);
+...
+// To log or prompt or whatever:
+$operationList = $batchWrapper->getSimplifiedRequests();
+
+// When finished:
+$batchWrapper->execute();
+```
+
+If you are only reporting / debugging, it is not necessary to create the
+Google_Http_Batch at all; you can just use the BatchWrapper by itself.

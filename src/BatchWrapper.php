@@ -59,7 +59,8 @@ class BatchWrapper
   }
 
   /**
-   * Return only the 'url' and 'body' of each request.
+   * Return only the 'url' and 'postBody' of each request.
+   * Everything is merged together for compactness.
    * Useful for logging, confirming, testing, etc.
    */
   public function getSimplifiedRequests($keys = array('url', 'postBody')) {
@@ -71,7 +72,13 @@ class BatchWrapper
         $methodName = 'get' . ucfirst($key);
         $value = $request->{$methodName}();
         if (null != $value) {
-          $item[$key] = $value;
+          if ($key == 'postBody') {
+            $value = (array)json_decode($value);
+            $item = array_merge($item, $value);
+          }
+          else {
+            $item[$key] = $value;
+          }
         }
       }
       $result[] = $item;

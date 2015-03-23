@@ -4,7 +4,7 @@ namespace Westkingdom\GoogleAPIExtensions;
 
 use WestKingdom\GoogleAPIExtensions\GroupsController;
 
-class Groups {
+class GroupsManager {
   protected $existingState = array();
   protected $ctrl;
 
@@ -15,6 +15,15 @@ class Groups {
   function __construct(GroupsController $ctrl, $state) {
     $this->ctrl = $ctrl;
     $this->existingState = $this->normalize($state);
+  }
+
+  static function createForDomain($applicationName, $domain, $state) {
+    $authenticator = ServiceAccountAuthenticator($applicationName);
+    $client = $authenticator->authenticate();
+    $policy = new StandardGroupPolicy($domain);
+    $controller = new GoogleAppsGroupsController($client, $policy);
+    $groupManager = new GroupsManager($controller, $currentState);
+    return $groupManager;
   }
 
   /**
@@ -122,7 +131,7 @@ class Groups {
   static function normalize($state) {
     $result = array();
     foreach ($state as $branch => $listsAndAliases) {
-      $result[$branch] = Groups::normalizeListsAndAliases($listsAndAliases);
+      $result[$branch] = GroupsManager::normalizeListsAndAliases($listsAndAliases);
     }
     return $result;
   }
@@ -131,13 +140,13 @@ class Groups {
     // First, normalize the offices data
     $offices = array('lists' => array());
     if (array_key_exists('lists', $listsAndAliases)) {
-      $offices['lists'] = Groups::normalizeGroupsData($listsAndAliases['lists']);
+      $offices['lists'] = GroupsManager::normalizeGroupsData($listsAndAliases['lists']);
     }
     if (array_key_exists('aliases', $listsAndAliases)) {
       $default = array(
         'forward-only' => TRUE,
       );
-      $offices['lists'] += Groups::normalizeGroupsData($listsAndAliases['aliases'], $default);
+      $offices['lists'] += GroupsManager::normalizeGroupsData($listsAndAliases['aliases'], $default);
     }
     return $offices;
   }
@@ -149,7 +158,7 @@ class Groups {
   static function normalizeGroupsData($aliasGroups, $default = array()) {
     $result = array();
     foreach ($aliasGroups as $office => $data) {
-      $data = Groups::normalizeMembershipData($data);
+      $data = GroupsManager::normalizeMembershipData($data);
       $data['properties'] += $default;
       $result[$office] = $data;
     }
@@ -169,10 +178,10 @@ class Groups {
    */
   static function normalizeMembershipData($data) {
     if (is_string($data)) {
-      return Groups::normalizeMembershipArrayData(array($data));
+      return GroupsManager::normalizeMembershipArrayData(array($data));
     }
     else {
-      return Groups::normalizeMembershipArrayData($data);
+      return GroupsManager::normalizeMembershipArrayData($data);
     }
   }
 

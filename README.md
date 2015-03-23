@@ -2,12 +2,11 @@
 
 1. Group Management
 1. Running the Tests
-1. Using the Code
-  1. Basic Example
-  1. Expanded Example
+1. Basic Example
   1. Include this Library Using Composer
   1. Set Up Your Authentication Information
   1. Prepare your data in $currentState and $newState
+1. Expanded Example
   1. Create a ServiceAccountAuthenticator
   1. Ask the service account authenticator to authenticate with the appropriate scopes
   1. Create a Standard Policy object
@@ -54,9 +53,7 @@ not necessary to set up any authentication credentials just to run the tests.
 
 All of the tests are also run by [Travis CI](https://travis-ci.org/westkingdom/google-api-extensions) on every commit.
 
-## Using the Code
-
-### Basic Example
+## Basic Example
 
 If you follow the instructions in the following sections, code similar to
 the basic overview shown below should work.
@@ -69,30 +66,6 @@ $groupsManager->update($newState);
 Even if you use this simple form, you need to understand how this API
 searches for and uses your authentication data, and how to manage the state
 of your data.  See below for more details.
-
-### Expanded Example
-
-If you would like more control over what happens in an update, you can
-construct the internal classes yourself and modify them before making your
-GroupsManager.
-
-```
-use Westkingdom\GoogleAPIExtensions\ServiceAccountAuthenticator;
-use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
-use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
-use Westkingdom\GoogleAPIExtensions\GroupsManager;
-
-$authenticator = ServiceAccountAuthenticator("My application");
-$client = $authenticator->authenticate();
-$policy = new StandardGroupPolicy('mydomain.org');
-$controller = new GoogleAppsGroupsController($client, $policy);
-$groupManager = new GroupsManager($controller, $currentState);
-$groupManager->update($newState);
-```
-
-Note: If you also want to control the behavior of the batch operations,
-you can provide a batch object to the GoogleAppsGroupsController constructor.
-See below for details.
 
 ### Include this Library Using Composer
 
@@ -152,7 +125,31 @@ and group members will never be removed.
 
 Future: The group manager could provide an "export" function to build the
 current state of the groups by calling the Google API.
-        
+
+## Expanded Example
+
+If you would like more control over what happens in an update, you can
+construct the internal classes yourself and modify them before making your
+GroupsManager.
+
+```
+use Westkingdom\GoogleAPIExtensions\ServiceAccountAuthenticator;
+use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
+use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
+use Westkingdom\GoogleAPIExtensions\GroupsManager;
+
+$authenticator = ServiceAccountAuthenticator("My application");
+$client = $authenticator->authenticate();
+$policy = new StandardGroupPolicy('mydomain.org');
+$controller = new GoogleAppsGroupsController($client, $policy);
+$groupManager = new GroupsManager($controller, $currentState);
+$groupManager->update($newState);
+```
+
+Note: If you also want to control the behavior of the batch operations,
+you can provide a batch object to the GoogleAppsGroupsController constructor.
+See below for details.
+
 ### Create a Service Authenticator
 
 A service authenticator will help your application load its authentication

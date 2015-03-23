@@ -41,17 +41,13 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
     $controller->deleteOffice('north', 'president', array());
 
     // The expected list of requests corresponding to the calls above:
-    //
-    // We removed an entry to match a code change to work around a bug
-    // or permissions problem:
-    //
-    //-
-    //  url: /groups/v1/groups/north-president%40testdomain.com
-    //  postBody: '{"whoCanJoin":"INVITED_CAN_JOIN","whoCanPostMessage":"ALL_IN_DOMAIN_CAN_POST"}'
     $expected = <<< EOT
 -
   url: /admin/directory/v1/groups
   postBody: '{"email":"north-president@testdomain.com","name":"North President"}'
+-
+  url: /groups/v1/groups/north-president%40testdomain.com
+  postBody: '{"whoCanJoin":"INVITED_CAN_JOIN","whoCanPostMessage":"ANYONE_CAN_POST"}'
 -
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members
   postBody: '{"email":"franklin@testdomain.com","role":"MEMBER","type":"USER"}'

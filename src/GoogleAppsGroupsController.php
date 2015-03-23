@@ -82,25 +82,19 @@ class GoogleAppsGroupsController implements GroupsController {
     $req = $this->directoryService->groups->insert($newgroup);
     $this->batch->add($req);
 
-    // GOOGLE APPS API BUG (or permissions problem):
-    //
-    // If we alter any settings data at all, then whoCanPost
-    // is changed to "ALL_IN_DOMAIN_CAN_POST".
-    //
-    // Fortunately, the default settings for a group are usable for us.
-/*
     $settingData = new \Google_Service_Groupssettings_Groups();
+
+    // TODO: allow the group policy to dictate what the settings should be.
 
     // INVITED_CAN_JOIN or CAN_REQUEST_TO_JOIN, etc.
     $settingData->setWhoCanJoin("INVITED_CAN_JOIN");
-    // ALL_MANAGERS_CAN_POST, ALL_IN_DOMAIN_CAN_POST, works
-    // ANYONE_CAN_POST returns 'permission denied'.
-    $settingData->setWhoCanPostMessage("ALL_IN_DOMAIN_CAN_POST");
+    // ALL_MANAGERS_CAN_POST, ALL_IN_DOMAIN_CAN_POST,
+    // ANYONE_CAN_POST, etc.
+    $settingData->setWhoCanPostMessage("ANYONE_CAN_POST");
 
     $group_id = $this->groupPolicy->getGroupId($branch, $officename);
     $req = $this->groupSettingsService->groups->patch($group_id, $settingData);
     $this->batch->add($req);
-*/
 
     if (isset($properties['alternate-addresses'])) {
       foreach ($properties['alternate-addresses'] as $alternate_address) {

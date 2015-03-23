@@ -3,7 +3,7 @@
 use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
 use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
 use Westkingdom\GoogleAPIExtensions\GroupPolicy;
-use Westkingdom\GoogleAPIExtensions\BatchStandin;
+use Westkingdom\GoogleAPIExtensions\BatchWrapper;
 
 use Symfony\Component\Yaml\Dumper;
 
@@ -27,7 +27,7 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
     // Use a batch standin, which acts like a Google_Http_Batch, but
     // merely accumulates the requests added to it, and returns them
     // to us when requested.
-    $batch = new BatchStandin();
+    $batch = new BatchWrapper();
 
     // Create a new Google Apps group controller, and add some users
     // and groups to it.
@@ -47,19 +47,19 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
     //
     //-
     //  url: /groups/v1/groups/north-president%40testdomain.com
-    //  body: '{"whoCanJoin":"INVITED_CAN_JOIN","whoCanPostMessage":"ALL_IN_DOMAIN_CAN_POST"}'
+    //  postBody: '{"whoCanJoin":"INVITED_CAN_JOIN","whoCanPostMessage":"ALL_IN_DOMAIN_CAN_POST"}'
     $expected = <<< EOT
 -
   url: /admin/directory/v1/groups
-  body: '{"email":"north-president@testdomain.com","name":"North President"}'
+  postBody: '{"email":"north-president@testdomain.com","name":"North President"}'
 -
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members
-  body: '{"email":"franklin@testdomain.com","role":"MEMBER","type":"USER"}'
+  postBody: '{"email":"franklin@testdomain.com","role":"MEMBER","type":"USER"}'
 -
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members/franklin%40testdomain.com
 -
   url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members
-  body: '{"email":"garner@testdomain.com","role":"MEMBER","type":"USER"}'
+  postBody: '{"email":"garner@testdomain.com","role":"MEMBER","type":"USER"}'
 -
   url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members/garner%40testdomain.com
 -

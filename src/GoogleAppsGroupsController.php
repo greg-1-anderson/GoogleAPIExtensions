@@ -30,10 +30,10 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->client = $client;
     $this->batch = $batch;
     if (!isset($batch)) {
-      $client->setUseBatch(true);
       $this->batch = new \Google_Http_Batch($client);
       $this->autoExecute = TRUE;
     }
+    $client->setUseBatch(true);
     $this->directoryService = new \Google_Service_Directory($client);
     $this->groupSettingsService = new \Google_Service_Groupssettings($client);
 

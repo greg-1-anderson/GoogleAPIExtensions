@@ -63,7 +63,7 @@ class BatchWrapper
    * Everything is merged together for compactness.
    * Useful for logging, confirming, testing, etc.
    */
-  public function getSimplifiedRequests($keys = array('url', 'postBody')) {
+  public function getSimplifiedRequests($keys = array('requestMethod', 'url', 'queryParams', 'postBody')) {
     $result = array();
     foreach ($this->requests as $request) {
       $request->setBaseComponent('');

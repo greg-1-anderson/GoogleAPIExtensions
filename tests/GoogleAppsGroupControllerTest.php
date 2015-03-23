@@ -43,28 +43,35 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
     // The expected list of requests corresponding to the calls above:
     $expected = <<< EOT
 -
+  requestMethod: POST
   url: /admin/directory/v1/groups
   email: north-president@testdomain.com
   name: 'North President'
 -
+  requestMethod: PATCH
   url: /groups/v1/groups/north-president%40testdomain.com
   whoCanJoin: INVITED_CAN_JOIN
   whoCanPostMessage: ANYONE_CAN_POST
 -
+  requestMethod: POST
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members
   email: franklin@testdomain.com
   role: MEMBER
   type: USER
 -
+  requestMethod: DELETE
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members/franklin%40testdomain.com
 -
+  requestMethod: POST
   url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members
   email: garner@testdomain.com
   role: MEMBER
   type: USER
 -
+  requestMethod: DELETE
   url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members/garner%40testdomain.com
 -
+  requestMethod: DELETE
   url: /admin/directory/v1/groups/north-president%40testdomain.com
 EOT;
 

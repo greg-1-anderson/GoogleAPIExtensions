@@ -35,7 +35,9 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
 
     $controller->insertOffice('north', 'president', array());
     $controller->insertMember('north', 'president', 'franklin@testdomain.com');
+    $controller->insertGroupAlternateAddress('north', 'president', 'elpresidente@testdomain.com');
     $controller->removeMember('north', 'president', 'franklin@testdomain.com');
+    $controller->removeGroupAlternateAddress('north', 'president', 'elpresidente');
     $controller->insertMember('north', 'vice-president', 'Garner');
     $controller->removeMember('north', 'vice-president', 'Garner');
     $controller->deleteOffice('north', 'president', array());
@@ -59,8 +61,15 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
   role: MEMBER
   type: USER
 -
+  requestMethod: POST
+  url: /admin/directory/v1/groups/north-president%40testdomain.com/aliases
+  alias: elpresidente@testdomain.com
+-
   requestMethod: DELETE
   url: /admin/directory/v1/groups/north-president%40testdomain.com/members/franklin%40testdomain.com
+-
+  requestMethod: DELETE
+  url: /admin/directory/v1/groups/north-president%40testdomain.com/aliases/elpresidente%40testdomain.com
 -
   requestMethod: POST
   url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members

@@ -83,6 +83,7 @@ north:
     // a member to the "west-webminister" group.
     $newState = $this->initialState;
     $newState['west']['lists']['webminister']['members'][] = 'new.admin@somewhere.com';
+    $newState['west']['lists']['webminister']['properties']['alternate-addresses'] = 'webminister@westkingdom.org';
 
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
@@ -91,6 +92,7 @@ north:
 
     // Prophesize that the new user will be added to the west webministers group.
     $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "webminister", "new.admin@somewhere.com"));
+    $testController->insertGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "webminister@westkingdom.org"));
     $testController->begin()->shouldBeCalled();
     $testController->complete()->shouldBeCalled();
 

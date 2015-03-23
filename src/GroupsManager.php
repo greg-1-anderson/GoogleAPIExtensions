@@ -82,7 +82,10 @@ class GroupsManager {
   function updateBranch($branch, $updateOffices, $existingOffices) {
     foreach ($updateOffices as $officename => $officeData) {
       if (array_key_exists($officename, $existingOffices)) {
-        $this->updateOffice($branch, $officename, $officeData['members'], $existingOffices[$officename]['members']);
+        $this->updateOfficeMembers($branch, $officename, $officeData['members'], $existingOffices[$officename]['members']);
+        $newAlternateAddresses = $this->getAlternateAddresses($branch, $officename, $officeData);
+        $existingAlternateAddresses = $this->getAlternateAddresses($branch, $officename, $existingOffices[$officename]);
+        $this->updateOfficeAlternateAddresses($branch, $officename, $newAlternateAddresses, $existingAlternateAddresses);
       }
       else {
         $this->insertOffice($branch, $officename, $officeData);
@@ -101,11 +104,10 @@ class GroupsManager {
   }
 
   function deleteBranch($branch, $removingOffices) {
-    $this->updateBranch($branch, array(), $removingOffices);
     $this->ctrl->deleteBranch($branch);
   }
 
-  function updateOffice($branch, $officename, $updateMembers, $existingMembers) {
+  function updateOfficeMembers($branch, $officename, $updateMembers, $existingMembers) {
     foreach ($updateMembers as $emailAddress) {
       if (!in_array($emailAddress, $existingMembers)) {
         $this->ctrl->insertMember($branch, $officename, $emailAddress);
@@ -118,14 +120,36 @@ class GroupsManager {
     }
   }
 
+  function updateOfficeAlternateAddresses($branch, $officename, $newAlternateAddresses, $existingAlternateAddresses) {
+    foreach ($newAlternateAddresses as $emailAddress) {
+      if (!in_array($emailAddress, $existingAlternateAddresses)) {
+        $this->ctrl->insertGroupAlternateAddress($branch, $officename, $emailAddress);
+      }
+    }
+    foreach ($existingAlternateAddresses as $emailAddress) {
+      if (!in_array($emailAddress, $newAlternateAddresses)) {
+        $this->ctrl->removeGroupAlternateAddress($branch, $officename, $emailAddress);
+      }
+    }
+  }
+
   function insertOffice($branch, $officename, $officeData) {
     $this->ctrl->insertOffice($branch, $officename, $officeData['properties']);
-    $this->updateOffice($branch, $officename, $officeData['members'], array());
+    $this->updateOfficeMembers($branch, $officename, $officeData['members'], array());
+    $newAlternateAddresses = $this->getAlternateAddresses($branch, $officename, $officeData);
+    $this->updateOfficeAlternateAddresses($branch, $officename, $newAlternateAddresses, array());
   }
 
   function deleteOffice($branch, $officename, $officeData) {
-    $this->updateOffice($branch, $officename, array(), $officeData['members']);
     $this->ctrl->deleteOffice($branch, $officename, $officeData['properties']);
+  }
+
+  function getAlternateAddresses($branch, $officename, $officeData) {
+    $result = array();
+    if (isset($officeData['properties']['alternate-addresses'])) {
+      $result = (array)$officeData['properties']['alternate-addresses'];
+    }
+    return $result;
   }
 
   static function normalize($state) {

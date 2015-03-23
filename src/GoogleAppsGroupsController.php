@@ -113,6 +113,27 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->batch->add($req);
   }
 
+  function insertGroupAlternateAddress($branch, $officename, $alternateAddress) {
+    $group_id = $this->groupPolicy->getGroupId($branch, $officename);
+    $normalized_email = $this->groupPolicy->normalizeEmail($alternateAddress);
+
+    $newAlternateAddress = new \Google_Service_Directory_Alias(array(
+      'alias' => $normalized_email,
+      ));
+    $req = $this->directoryService->groups_aliases->insert($group_id, $newAlternateAddress);
+    $this->batch->add($req);
+  }
+
+  function removeGroupAlternateAddress($branch, $officename, $alternateAddress) {
+    $group_id = $this->groupPolicy->getGroupId($branch, $officename);
+    $normalized_email = $this->groupPolicy->normalizeEmail($alternateAddress);
+
+    // n.b. inserting an alias also adds a non-editable alias, but deleting
+    // an alias does not delete its non-editable counterpart.
+    $req = $this->directoryService->groups_aliases->delete($group_id, $normalized_email);
+    $this->batch->add($req);
+  }
+
   function begin() {
   }
 

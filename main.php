@@ -178,17 +178,6 @@ $data = $service->members->listMembers($group_email);
 var_export($data);
 print("\n");
 
-// Create an alias address for a group
-
-$newalias = new Google_Service_Directory_Alias(array(
-  'alias' => "uber-seneschal@$domain",
-  ));
-$service->groups_aliases->insert("west-seneschal@$domain", $newalias);
-
-
-// n.b. inserting an alias also adds a non-editable alias, but deleting
-// an alias does not delete its non-editable counterpart.
-$service->groups_aliases->delete("west-seneschal@$domain", "uber-seneschal@$domain");
 
 // List all the groups
 $opt = array('domain' => "$domain");

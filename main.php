@@ -1,10 +1,20 @@
 <?php
 
+//
+// This is sample code.  Read it and modify to suit; it is not useful
+// to run as-is, at the moment.
+//
+
 include dirname(__FILE__) . "/vendor/autoload.php";
 
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\Yaml\Dumper;
 use GoogleAPIExtensions\Groups;
 use Westkingdom\GoogleAPIExtensions\ServiceAccountAuthenticator;
+use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
+use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
+use Westkingdom\GoogleAPIExtensions\BatchWrapper;
+
 
 $scopes = array(
     // Books is only for testing.  The rest I think we actually need.
@@ -38,14 +48,46 @@ $scopes = array(
     Google_Service_Calendar::CALENDAR_READONLY,
   );
 
+
+
+// Load our YAML data
+$groupData = file_get_contents(dirname(__FILE__) . "/server.westkingdom.org.yaml");
+$parsed = Yaml::parse($groupData);
+$newState = Westkingdom\GoogleAPIExtensions\GroupsManager::normalize($parsed);
+
+$groupData = file_get_contents(dirname(__FILE__) . "/currentstate.westkingdom.org.yaml");
+$parsed = Yaml::parse($groupData);
+$currentState = Westkingdom\GoogleAPIExtensions\GroupsManager::normalize($parsed);
+
 $authenticator = new ServiceAccountAuthenticator("Google Group API Test");
 $client = $authenticator->authenticate('service-account.yaml', $scopes);
 
 
-// Test the actual Google API
+$policy = new StandardGroupPolicy('westkingdom.org');
+$batch = new \Google_Http_Batch($client);
+$batchWrapper = new BatchWrapper($batch);
+$controller = new GoogleAppsGroupsController($client, $policy, $batchWrapper);
+$groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($controller, $currentState);
+$groupManager->update($newState);
 
-$domain = "westkingdom.org";
-$group_email = "west-webminister@$domain";
+$pendingOperations = $batchWrapper->getSimplifiedRequests();
+
+$dumper = new Dumper();
+$dumper->setIndentation(2);
+$pendingAsYaml = trim($dumper->dump($pendingOperations, PHP_INT_MAX));
+
+print($pendingAsYaml);
+
+exit(0);
+
+// Actually do the update
+$batchWrapper->execute();
+
+
+exit(0);
+
+// Test the Google Books API
+
 
 print("Get books service.\n");
 
@@ -64,8 +106,6 @@ print("Get directory service.\n");
 
 $service = new Google_Service_Directory($client);
 
-
-
 print("Call directory service:\n");
 
 // Get info about a group
@@ -73,9 +113,7 @@ $data = $service->groups->get($group_email);
 var_export($data);
 print("\n");
 
-// TEMPORARY
-// $service->users->delete("first.last@$domain");
-
+// Add a user
 $user = new Google_Service_Directory_User(array(
     'name' => array(
       'familyName' => 'Firstname',
@@ -89,6 +127,7 @@ $user = new Google_Service_Directory_User(array(
 $service->users->insert($user);
 
 
+// Get info about a user
 
 $data = $service->users->get("first.last@$domain");
 var_export($data);
@@ -132,11 +171,6 @@ print("\n");
 */
 
 
-$member = new Google_Service_Directory_Member(array(
-                        'email' =>"first.last@$domain",
-                        'role' => 'MEMBER',
-                        'type' => 'USER'));
-$service->members->insert($group_email, $member);
 
 
 // Get members of a group
@@ -144,19 +178,7 @@ $data = $service->members->listMembers($group_email);
 var_export($data);
 print("\n");
 
-$service->members->delete($group_email, "first.last@$domain");
-
-
-$newgroup = new Google_Service_Directory_Group(array(
-        'email' => "test-group@$domain",
-        'name' => 'This is a test group',
-  ));
-
-$service->groups->insert($newgroup);
-
-
-$data = $service->groups->delete("test-group@$domain");
-
+// Create an alias address for a group
 
 $newalias = new Google_Service_Directory_Alias(array(
   'alias' => "uber-seneschal@$domain",
@@ -174,7 +196,7 @@ $data = $service->groups->listGroups($opt);
 var_export($data);
 print("\n");
 
-$service->users->delete("first.last@$domain");
+
 
 $service = new Google_Service_Groupssettings($client);
 

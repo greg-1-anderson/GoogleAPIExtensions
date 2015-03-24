@@ -1,6 +1,7 @@
 <?php
 
 use Westkingdom\GoogleAPIExtensions\GroupsManager;
+use Westkingdom\GoogleAPIExtensions\Utils;
 use Prophecy\PhpUnit\ProphecyTestCase;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Dumper;
@@ -15,7 +16,7 @@ class GroupsTestCase extends ProphecyTestCase {
     $groupData = file_get_contents(dirname(__FILE__) . "/testData/westkingdom.org.yaml");
     $parsed = Yaml::parse($groupData);
     // Throw away the first top-level key, use all of the data under it. Ignore any other top-level keys.
-    $this->initialState = GroupsManager::normalize(array_pop($parsed));
+    $this->initialState = Utils::normalize(array_pop($parsed));
   }
 
   public function testNormalize() {
@@ -31,7 +32,7 @@ north:
       - president@north.whitehouse.gov
       - secretary@north.whitehouse.gov");
 
-    $normalized = GroupsManager::normalize($data);
+    $normalized = Utils::normalize($data);
 
     $expected = "
 north:
@@ -88,7 +89,10 @@ north:
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
     $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
-    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($testController->reveal(), $this->initialState);
+    $revealedController = $testController->reveal();
+    $journal = new Westkingdom\GoogleAPIExtensions\Journal();
+    $updater = new Westkingdom\GoogleAPIExtensions\Updater($revealedController, $journal);
+    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($revealedController, $this->initialState, $updater, $journal);
 
     // Prophesize that the new user will be added to the west webministers group.
     $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "webminister", "new.admin@somewhere.com"));
@@ -113,7 +117,10 @@ north:
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
     $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
-    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($testController->reveal(), $this->initialState);
+    $revealedController = $testController->reveal();
+    $journal = new Westkingdom\GoogleAPIExtensions\Journal();
+    $updater = new Westkingdom\GoogleAPIExtensions\Updater($revealedController, $journal);
+    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($revealedController, $this->initialState, $updater, $journal);
 
     // Prophesize that a user will be removed from the west webministers group,
     // and then removed again

@@ -32,6 +32,11 @@ interface GroupPolicy {
   function getGroupName($branch, $officename, $properties);
 
   /**
+   * Return the domain name associated with these Google groups.
+   */
+  function getDomain();
+
+  /**
    * Normalize an email address
    */
   function normalizeEmail($email);

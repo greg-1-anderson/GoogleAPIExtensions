@@ -32,6 +32,7 @@ namespace Westkingdom\GoogleAPIExtensions;
  */
 class StandardGroupPolicy implements GroupPolicy {
   protected $defaults;
+  protected $oldPolicy;
 
   /**
    * @param $domain The base domain for all groups
@@ -42,6 +43,8 @@ class StandardGroupPolicy implements GroupPolicy {
       'domain' => $domain,
       'group-name' => '${branch} ${office}',
       'group-email' => '$(branch)-$(office)@$(domain)',
+      'top-level-group' => preg_replace('/\.[a-z]*$/', '', $domain),
+      'top-level-group-email' => '$(office)@$(domain)',
     );
   }
 
@@ -76,6 +79,13 @@ class StandardGroupPolicy implements GroupPolicy {
       'office' => $officename,
     );
     return $this->getProperty('group-name', $properties);
+  }
+
+  /**
+   * Return the domain name associated with these Google groups.
+   */
+  function getDomain() {
+    return $this->defaults['domain'];
   }
 
   /**

@@ -33,7 +33,6 @@ class GoogleAppsGroupsController implements GroupsController {
       $this->batch = new \Google_Http_Batch($client);
       $this->autoExecute = TRUE;
     }
-    $client->setUseBatch(true);
     $this->directoryService = new \Google_Service_Directory($client);
     $this->groupSettingsService = new \Google_Service_Groupssettings($client);
 
@@ -134,10 +133,16 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->batch->add($req);
   }
 
+  function getDomain() {
+    return $this->policy->getDomain();
+  }
+
   function begin() {
+    $client->setUseBatch(TRUE);
   }
 
   function complete() {
+    $client->setUseBatch(FALSE);
     if ($this->autoExecute) {
       $this->execute();
     }

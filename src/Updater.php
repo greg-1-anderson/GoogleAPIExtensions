@@ -2,10 +2,6 @@
 
 namespace Westkingdom\GoogleAPIExtensions;
 
-use WestKingdom\GoogleAPIExtensions\GroupsController;
-use WestKingdom\GoogleAPIExtensions\Journal;
-use WestKingdom\GoogleAPIExtensions\Utils;
-
 class Updater {
   protected $ctrl;
 

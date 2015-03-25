@@ -133,10 +133,6 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->batch->add($req);
   }
 
-  function getDomain() {
-    return $this->policy->getDomain();
-  }
-
   function begin() {
     $client->setUseBatch(TRUE);
   }

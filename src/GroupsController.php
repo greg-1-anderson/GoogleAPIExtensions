@@ -3,7 +3,6 @@
 namespace Westkingdom\GoogleAPIExtensions;
 
 interface GroupsController {
-  function getDomain();
   function begin();
   function insertBranch($branch);
   function deleteBranch($branch);

@@ -4,6 +4,7 @@ namespace Westkingdom\GoogleAPIExtensions;
 
 interface GroupsController {
   function begin();
+  function fetch();
   function insertBranch($branch);
   function deleteBranch($branch);
   function insertMember($branch, $officename, $memberEmailAddress);

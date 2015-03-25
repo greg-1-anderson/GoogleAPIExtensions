@@ -39,6 +39,41 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->groupPolicy = $policy;
   }
 
+  /**
+   * Fetch and export memberships using the Google API.
+   */
+  function fetch() {
+    $result = array();
+
+    // Fetch all the groups in this domain
+    $opt = array('domain' => $this->groupPolicy->getDomain());
+    $data = $this->directoryService->groups->listGroups($opt);
+    $groups = $data->getGroups();
+
+    // Iterate over the groups, and fill in info about each.
+    foreach ($groups as $groupInfo) {
+      $email = $groupInfo->getEmail();
+      $emailParts = explode('@', $email);
+      $addressParts = explode('-', $emailParts[0]);
+      $office = array_pop($addressParts);
+      $branch = implode('-', $addressParts);
+      $members = array();
+      $membersData = $this->directoryService->members->listMembers($email);
+      $membersList = $membersData->getMembers();
+      foreach ($membersList as $memberInfo) {
+        $members[] = $memberInfo->getEmail();
+      }
+      $properties['group-name'] = $groupInfo->getName();
+      $properties['id'] = $groupInfo->getId();
+      $results[$branch]['lists'][$office] = array(
+        'members' => $members,
+        'properties' => $properties,
+      );
+    }
+
+    return $results;
+  }
+
   function insertBranch($branch) {
     // no-op; we create groups for offices in a group, but presently
     // we have no Google object that we create for branches.
@@ -138,13 +173,15 @@ class GoogleAppsGroupsController implements GroupsController {
   }
 
   function complete($execute = NULL) {
+    $result = array();
     $client->setUseBatch(FALSE);
     if (!isset($execute)) {
       $execute = $this->autoExecute;
     }
     if ($execute) {
-      $this->execute();
+      $result = $this->execute();
     }
+    return $result;
   }
 
   function execute() {

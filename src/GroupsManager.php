@@ -2,37 +2,24 @@
 
 namespace Westkingdom\GoogleAPIExtensions;
 
-use WestKingdom\GoogleAPIExtensions\GroupsController;
-use WestKingdom\GoogleAPIExtensions\Journal;
-use WestKingdom\GoogleAPIExtensions\Updater;
-
 class GroupsManager {
   protected $existingState = array();
   protected $ctrl;
   protected $updater;
-  protected $journal;
 
   /**
    * @param $ctrl control object that does actual actions
    * @param $state initial state
    */
-  function __construct(GroupsController $ctrl, $state, $updater = NULL, $journal = NULL) {
+  function __construct(GroupsController $ctrl, $state, $updater = NULL) {
     $this->ctrl = $ctrl;
     $this->existingState = Utils::normalize($state);
 
-    if (isset($journal)) {
-      $this->journal = $journal;
-    }
-    else {
-      $this->journal = new Journal();
-    }
-
     if (isset($updater)) {
       $this->updater = $updater;
-      $this->updater->setJournal($journal);
     }
     else {
-      $this->updater = new Updater($ctrl, $journal);
+      $this->updater = new Updater($ctrl);
     }
   }
 
@@ -41,7 +28,8 @@ class GroupsManager {
     $client = $authenticator->authenticate();
     $policy = new StandardGroupPolicy($domain);
     $controller = new GoogleAppsGroupsController($client, $policy);
-    $groupManager = new GroupsManager($controller, $currentState);
+    $journal = new Journal($controller);
+    $groupManager = new GroupsManager($journal, $currentState);
     return $groupManager;
   }
 

@@ -90,9 +90,8 @@ north:
     // Groups object we are going to test.
     $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
     $revealedController = $testController->reveal();
-    $journal = new Westkingdom\GoogleAPIExtensions\Journal();
-    $updater = new Westkingdom\GoogleAPIExtensions\Updater($revealedController, $journal);
-    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($revealedController, $this->initialState, $updater, $journal);
+    $journal = new Westkingdom\GoogleAPIExtensions\Journal($revealedController);
+    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($journal, $this->initialState);
 
     // Prophesize that the new user will be added to the west webministers group.
     $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "webminister", "new.admin@somewhere.com"));
@@ -118,9 +117,8 @@ north:
     // Groups object we are going to test.
     $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
     $revealedController = $testController->reveal();
-    $journal = new Westkingdom\GoogleAPIExtensions\Journal();
-    $updater = new Westkingdom\GoogleAPIExtensions\Updater($revealedController, $journal);
-    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($revealedController, $this->initialState, $updater, $journal);
+    $journal = new Westkingdom\GoogleAPIExtensions\Journal($revealedController);
+    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($journal, $this->initialState);
 
     // Prophesize that a user will be removed from the west webministers group,
     // and then removed again

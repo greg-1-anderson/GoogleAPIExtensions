@@ -8,19 +8,13 @@ use WestKingdom\GoogleAPIExtensions\Utils;
 
 class Updater {
   protected $ctrl;
-  protected $journal;
 
   /**
    * @param $ctrl control object that does actual actions
    * @param $state initial state
    */
-  function __construct(GroupsController $ctrl, Journal $journal) {
+  function __construct(GroupsController $ctrl) {
     $this->ctrl = $ctrl;
-    $this->journal = $journal;
-  }
-
-  function setJournal($journal) {
-    $this->journal = $journal;
   }
 
   /**

@@ -6,6 +6,7 @@ class GroupsManager {
   protected $existingState = array();
   protected $ctrl;
   protected $updater;
+  protected $journal;
 
   /**
    * @param $ctrl control object that does actual actions
@@ -13,13 +14,14 @@ class GroupsManager {
    */
   function __construct(GroupsController $ctrl, $state, $updater = NULL) {
     $this->ctrl = $ctrl;
+    $this->journal = new Journal($ctrl);
     $this->existingState = Utils::normalize($state);
 
     if (isset($updater)) {
       $this->updater = $updater;
     }
     else {
-      $this->updater = new Updater($ctrl);
+      $this->updater = new Updater($this->journal);
     }
   }
 
@@ -28,8 +30,7 @@ class GroupsManager {
     $client = $authenticator->authenticate();
     $policy = new StandardGroupPolicy($domain);
     $controller = new GoogleAppsGroupsController($client, $policy);
-    $journal = new Journal($controller);
-    $groupManager = new GroupsManager($journal, $currentState);
+    $groupManager = new GroupsManager($controller, $currentState);
     return $groupManager;
   }
 
@@ -66,6 +67,6 @@ class GroupsManager {
   }
 
   function execute() {
-    $this->ctrl->execute();
+    $this->journal->execute();
   }
 }

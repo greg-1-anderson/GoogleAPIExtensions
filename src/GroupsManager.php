@@ -2,6 +2,8 @@
 
 namespace Westkingdom\GoogleAPIExtensions;
 
+use Westkingdom\GoogleAPIExtensions\Internal\Journal;
+
 class GroupsManager {
   protected $existingState = array();
   protected $ctrl;
@@ -21,7 +23,7 @@ class GroupsManager {
       $this->updater = $updater;
     }
     else {
-      $this->updater = new Updater($this->journal);
+      $this->updater = new Internal\Updater($this->journal);
     }
   }
 

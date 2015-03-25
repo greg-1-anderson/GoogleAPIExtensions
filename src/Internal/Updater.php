@@ -1,6 +1,9 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions;
+namespace Westkingdom\GoogleAPIExtensions\Internal;
+
+use WestKingdom\GoogleAPIExtensions\GroupsController;
+use WestKingdom\GoogleAPIExtensions\Utils;
 
 class Updater {
   protected $ctrl;

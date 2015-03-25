@@ -1,6 +1,10 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions;
+namespace Westkingdom\GoogleAPIExtensions\Internal;
+
+use Westkingdom\GoogleAPIExtensions\GroupsController;
+
+use Westkingdom\GoogleAPIExtensions;
 
 class Journal implements GroupsController {
   protected $ctrl;

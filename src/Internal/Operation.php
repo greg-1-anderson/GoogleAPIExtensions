@@ -1,6 +1,6 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions;
+namespace Westkingdom\GoogleAPIExtensions\Internal;
 
 class Operation {
   protected $runFunction;

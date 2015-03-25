@@ -186,12 +186,12 @@ to the Google API.  Batch mode is always used; you can manage the
 batch object yourself, as shown below:
 
 ```
-$client->setUseBatch(true);
 $batch = new \Google_Http_Batch($client);
 $controller = new GoogleAppsGroupsController($client, $policy, $batch);
+$groupManager = new GroupsManager($controller, $currentState);
 ...
 // When finished:
-$batch->execute();
+$groupManager->execute();
 ```
 
 If you do not want to manage the batch object, just leave off those

@@ -102,6 +102,7 @@ north:
     // Update the group.  The prophecies are checked against actual
     // behavior during teardown.
     $groupManager->update($newState);
+    $groupManager->execute();
   }
 
   public function testRemoveMember() {
@@ -129,5 +130,6 @@ north:
     // Update the group.  The prophecies are checked against actual
     // behavior during teardown.
     $groupManager->update($newState);
+    $groupManager->execute();
   }
 }

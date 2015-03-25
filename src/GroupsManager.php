@@ -64,4 +64,8 @@ class GroupsManager {
     $this->updater->update($memberships, $this->existingState);
     $this->existingState = $memberships;
   }
+
+  function execute() {
+    $this->ctrl->execute();
+  }
 }

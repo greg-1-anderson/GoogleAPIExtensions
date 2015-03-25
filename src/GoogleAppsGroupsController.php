@@ -137,9 +137,12 @@ class GoogleAppsGroupsController implements GroupsController {
     $client->setUseBatch(TRUE);
   }
 
-  function complete() {
+  function complete($execute = NULL) {
     $client->setUseBatch(FALSE);
-    if ($this->autoExecute) {
+    if (!isset($execute)) {
+      $execute = $this->autoExecute;
+    }
+    if ($execute) {
       $this->execute();
     }
   }

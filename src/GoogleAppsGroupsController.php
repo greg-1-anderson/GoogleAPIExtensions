@@ -124,7 +124,9 @@ class GoogleAppsGroupsController implements GroupsController {
 
     $req = $this->directoryService->groups->insert($newgroup);
     $this->batch->add($req);
+  }
 
+  function configureOffice($branch, $officename, $properties) {
     $settingData = new \Google_Service_Groupssettings_Groups();
 
     // TODO: allow the group policy to dictate what the settings should be.
@@ -157,6 +159,10 @@ class GoogleAppsGroupsController implements GroupsController {
   }
 
   function verifyOffice($branch, $officename, $properties) {
+    return TRUE;
+  }
+
+  function verifyOfficeConfiguration($branch, $officename, $properties) {
     return TRUE;
   }
 

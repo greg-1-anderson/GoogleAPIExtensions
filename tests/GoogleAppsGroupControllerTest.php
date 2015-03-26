@@ -34,6 +34,7 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
     $controller = new GoogleAppsGroupsController($this->client, $this->policy, $batch);
 
     $controller->insertOffice('north', 'president', array());
+    $controller->configureOffice('north', 'president', array());
     $controller->insertMember('north', 'president', 'franklin@testdomain.com');
     $controller->insertGroupAlternateAddress('north', 'president', 'elpresidente@testdomain.com');
     $controller->removeMember('north', 'president', 'franklin@testdomain.com');

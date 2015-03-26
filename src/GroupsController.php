@@ -14,7 +14,9 @@ interface GroupsController {
   function removeGroupAlternateAddress($branch, $officename, $alternateAddress);
   function verifyGroupAlternateAddress($branch, $officename, $alternateAddress);
   function insertOffice($branch, $officename, $properties);
+  function configureOffice($branch, $officename, $properties);
   function deleteOffice($branch, $officename, $properties);
   function verifyOffice($branch, $officename, $properties);
+  function verifyOfficeConfiguration($branch, $officename, $properties);
   function complete();
 }

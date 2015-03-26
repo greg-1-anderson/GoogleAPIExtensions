@@ -8,11 +8,12 @@ class Journal {
   protected $ctrl;
   protected $operationQueues;
 
+  const SETUP_QUEUE = 'create';
   const CREATION_QUEUE = 'create';
   const DEFAULT_QUEUE = 'default';
-  const LAST_QUEUE = 'last';
+  const TEARDOWN_QUEUE = 'last';
 
-  protected $queues = array(Journal::CREATION_QUEUE, Journal::DEFAULT_QUEUE, Journal::LAST_QUEUE);
+  protected $queues = array(Journal::SETUP_QUEUE, Journal::CREATION_QUEUE, Journal::DEFAULT_QUEUE, Journal::TEARDOWN_QUEUE);
 
   function queue(Operation $op, $queueName = Journal::DEFAULT_QUEUE) {
     // TODO: validate that $queueName exists in QUEUES
@@ -67,13 +68,21 @@ class Journal {
   }
 
   function insertBranch($branch) {
-    // TODO: this is a no-op, so we do nothing for now.
-    return $this->ctrl->insertBranch($branch);
+    $op = new Operation(
+      array($this->ctrl, "insertBranch"),
+      array($branch),
+      array($this->ctrl, "verifyBranch"),
+      array($branch)
+    );
+    $this->queue($op, Journal::SETUP_QUEUE);
   }
 
   function deleteBranch($branch) {
-    // TODO: this is a no-op, so we do nothing for now.
-    return $this->ctrl->deleteBranch($branch);
+    $op = new Operation(
+      array($this->ctrl, "deleteBranch"),
+      array($branch)
+    );
+    $this->queue($op, Journal::TEARDOWN_QUEUE);
   }
 
   function insertMember($branch, $officename, $memberEmailAddress) {
@@ -84,7 +93,6 @@ class Journal {
       array($branch, $officename, $memberEmailAddress)
     );
     $this->queue($op);
-    // return $this->ctrl->insertMember($branch, $officename, $memberEmailAddress);
   }
 
   function removeMember($branch, $officename, $memberEmailAddress) {
@@ -93,7 +101,6 @@ class Journal {
       array($branch, $officename, $memberEmailAddress)
     );
     $this->queue($op);
-    // return $this->ctrl->removeMember($branch, $officename, $memberEmailAddress);
   }
 
   function insertGroupAlternateAddress($branch, $officename, $alternateAddress) {
@@ -104,7 +111,6 @@ class Journal {
       array($branch, $officename, $alternateAddress)
     );
     $this->queue($op);
-    //return $this->ctrl->insertGroupAlternateAddress($branch, $officename, $alternateAddress);
   }
 
   function removeGroupAlternateAddress($branch, $officename, $alternateAddress) {
@@ -113,7 +119,6 @@ class Journal {
       array($branch, $officename, $alternateAddress)
     );
     $this->queue($op);
-    //return $this->ctrl->removeGroupAlternateAddress($branch, $officename, $alternateAddress);
   }
 
   function insertOffice($branch, $officename, $properties) {
@@ -124,11 +129,21 @@ class Journal {
       array($branch, $officename, $properties)
     );
     $this->queue($op, Journal::CREATION_QUEUE);
-    return $this->ctrl->insertOffice($branch, $officename, $properties);
+    $op = new Operation(
+      array($this->ctrl, "configureOffice"),
+      array($branch, $officename, $properties),
+      array($this->ctrl, "verifyOfficeConfiguration"),
+      array($branch, $officename, $properties)
+    );
+    $this->queue($op);
   }
 
   function deleteOffice($branch, $officename, $properties) {
-    return $this->ctrl->deleteOffice($branch, $officename, $properties);
+    $op = new Operation(
+      array($this->ctrl, "deleteOffice"),
+      array($branch, $officename, $properties)
+    );
+    $this->queue($op);
   }
 
   function complete() {

@@ -12,7 +12,7 @@ class Updater {
    * @param $ctrl control object that does actual actions
    * @param $state initial state
    */
-  function __construct(GroupsController $ctrl) {
+  function __construct(Journal $ctrl) {
     $this->ctrl = $ctrl;
   }
 

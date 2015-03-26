@@ -2,11 +2,9 @@
 
 namespace Westkingdom\GoogleAPIExtensions\Internal;
 
-use Westkingdom\GoogleAPIExtensions\GroupsController;
-
 use Westkingdom\GoogleAPIExtensions;
 
-class Journal implements GroupsController {
+class Journal {
   protected $ctrl;
   protected $operationQueues;
 
@@ -82,15 +80,11 @@ class Journal implements GroupsController {
     $op = new Operation(
       array($this->ctrl, "insertMember"),
       array($branch, $officename, $memberEmailAddress),
-      array($this, "verifyInsertMember"),
+      array($this->ctrl, "verifyMember"),
       array($branch, $officename, $memberEmailAddress)
     );
     $this->queue($op);
     // return $this->ctrl->insertMember($branch, $officename, $memberEmailAddress);
-  }
-
-  function verifyInsertMember($branch, $officename, $memberEmailAddress) {
-    return TRUE;
   }
 
   function removeMember($branch, $officename, $memberEmailAddress) {
@@ -106,15 +100,11 @@ class Journal implements GroupsController {
     $op = new Operation(
       array($this->ctrl, "insertGroupAlternateAddress"),
       array($branch, $officename, $alternateAddress),
-      array($this, "verifyInsertGroupAlternateAddress"),
+      array($this->ctrl, "verifyGroupAlternateAddress"),
       array($branch, $officename, $alternateAddress)
     );
     $this->queue($op);
     //return $this->ctrl->insertGroupAlternateAddress($branch, $officename, $alternateAddress);
-  }
-
-  function verifyInsertGroupAlternateAddress($branch, $officename, $alternateAddress) {
-    return TRUE;
   }
 
   function removeGroupAlternateAddress($branch, $officename, $alternateAddress) {
@@ -130,7 +120,7 @@ class Journal implements GroupsController {
     $op = new Operation(
       array($this->ctrl, "insertOffice"),
       array($branch, $officename, $properties),
-      array($this, "verifyInsertOffice"),
+      array($this->ctrl, "verifyOffice"),
       array($branch, $officename, $properties)
     );
     $this->queue($op, Journal::CREATION_QUEUE);

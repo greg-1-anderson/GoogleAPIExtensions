@@ -75,12 +75,17 @@ class GoogleAppsGroupsController implements GroupsController {
   }
 
   function insertBranch($branch) {
-    // no-op; we create groups for offices in a group, but presently
+    // no-op; we create groups for offices in a branch, but presently
     // we have no Google object that we create for branches.
   }
 
   function deleteBranch($branch) {
     // no-op; @see insertBranch.
+  }
+
+  function verifyBranch($branch) {
+    // no-op; @see insertBranch.
+    return TRUE;
   }
 
   function insertMember($branch, $officename, $memberEmailAddress) {
@@ -102,6 +107,10 @@ class GoogleAppsGroupsController implements GroupsController {
 
     $req = $this->directoryService->members->delete($group_id, $normalized_email);
     $this->batch->add($req);
+  }
+
+  function verifyMember($branch, $officename, $memberEmailAddress) {
+    return TRUE;
   }
 
   function insertOffice($branch, $officename, $properties) {
@@ -147,6 +156,10 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->batch->add($req);
   }
 
+  function verifyOffice($branch, $officename, $properties) {
+    return TRUE;
+  }
+
   function insertGroupAlternateAddress($branch, $officename, $alternateAddress) {
     $group_id = $this->groupPolicy->getGroupId($branch, $officename);
     $normalized_email = $this->groupPolicy->normalizeEmail($alternateAddress);
@@ -166,6 +179,10 @@ class GoogleAppsGroupsController implements GroupsController {
     // an alias does not delete its non-editable counterpart.
     $req = $this->directoryService->groups_aliases->delete($group_id, $normalized_email);
     $this->batch->add($req);
+  }
+
+  function verifyGroupAlternateAddress($branch, $officename, $alternateAddress) {
+    return TRUE;
   }
 
   function begin() {

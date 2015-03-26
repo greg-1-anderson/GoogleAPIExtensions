@@ -92,9 +92,11 @@ north:
     $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($testController->reveal(), $this->initialState);
 
     // Prophesize that the new user will be added to the west webministers group.
+    $testController->begin()->shouldBeCalled();
     $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "webminister", "new.admin@somewhere.com"));
     $testController->insertGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "webminister@westkingdom.org"));
-    $testController->begin()->shouldBeCalled();
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array("west", "webminister", "new.admin@somewhere.com"));
+    $testController->verifyGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "webminister@westkingdom.org"));
     $testController->complete()->shouldBeCalled();
 
     // Update the group.  The prophecies are checked against actual
@@ -119,8 +121,8 @@ north:
 
     // Prophesize that a user will be removed from the west webministers group,
     // and then removed again
-    $testController->removeMember()->shouldBeCalled()->withArguments(array("west", "webminister", "robxxx@sca.org"));
     $testController->begin()->shouldBeCalled();
+    $testController->removeMember()->shouldBeCalled()->withArguments(array("west", "webminister", "robxxx@sca.org"));
     $testController->complete()->shouldBeCalled();
 
     // Update the group.  The prophecies are checked against actual

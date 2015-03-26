@@ -5,7 +5,6 @@ namespace Westkingdom\GoogleAPIExtensions;
 use Westkingdom\GoogleAPIExtensions\Internal\Journal;
 
 class GroupsManager {
-  protected $existingState = array();
   protected $ctrl;
   protected $updater;
   protected $journal;
@@ -16,8 +15,7 @@ class GroupsManager {
    */
   function __construct(GroupsController $ctrl, $state, $updater = NULL) {
     $this->ctrl = $ctrl;
-    $this->journal = new Journal($ctrl);
-    $this->existingState = Utils::normalize($state);
+    $this->journal = new Journal($ctrl, Utils::normalize($state));
 
     if (isset($updater)) {
       $this->updater = $updater;
@@ -64,11 +62,12 @@ class GroupsManager {
    *    and an alias just passes the email through.
    */
   function update($memberships) {
-    $this->updater->update($memberships, $this->existingState);
-    $this->existingState = $memberships;
+    $this->updater->update($memberships, $this->journal->getExistingState());
+    return $this->journal->getExistingState();
   }
 
   function execute() {
     $this->journal->execute();
+    return $this->journal->getExistingState();
   }
 }

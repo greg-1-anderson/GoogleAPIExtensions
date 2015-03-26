@@ -7,6 +7,7 @@ use Westkingdom\GoogleAPIExtensions;
 class Journal {
   protected $ctrl;
   protected $operationQueues;
+  protected $existingState = array();
 
   const SETUP_QUEUE = 'create';
   const CREATION_QUEUE = 'create';
@@ -14,6 +15,15 @@ class Journal {
   const TEARDOWN_QUEUE = 'last';
 
   protected $queues = array(Journal::SETUP_QUEUE, Journal::CREATION_QUEUE, Journal::DEFAULT_QUEUE, Journal::TEARDOWN_QUEUE);
+
+  function __construct($ctrl, $existingState) {
+    $this->ctrl = $ctrl;
+    $this->existingState = $existingState;
+  }
+
+  function getExistingState() {
+    return $this->existingState;
+  }
 
   function queue(Operation $op, $queueName = Journal::DEFAULT_QUEUE) {
     // TODO: validate that $queueName exists in QUEUES
@@ -58,10 +68,6 @@ class Journal {
     foreach ($this->queues as $queueName) {
       $this->verifyQueue($queueName);
     }
-  }
-
-  function __construct($ctrl) {
-    $this->ctrl = $ctrl;
   }
 
   function begin() {

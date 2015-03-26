@@ -48,7 +48,17 @@ class Journal {
     $unfinished = array();
     if (array_key_exists($queueName, $this->operationQueues)) {
       foreach ($this->operationQueues[$queueName] as $op) {
-        if (!$op->verify()) {
+        $verified = $op->verify();
+        // If the operation is verified, then run the 'verified'
+        // method that matches the name of the run function for this
+        // operation (with 'Verified' appended).
+        if ($verified) {
+          $verifiedMethodName = $op->getRunFunctionName() . 'Verified';
+          if (method_exists($this, $verifiedMethodName)) {
+            call_user_func_array(array($this, $verifiedMethodName), $op->getRunFunctionParameters());
+          }
+        }
+        else {
           $unfinished[] = $op;
         }
       }
@@ -83,12 +93,22 @@ class Journal {
     $this->queue($op, Journal::SETUP_QUEUE);
   }
 
+  function insertBranchVerified($branch) {
+    if (!array_key_exists($branch, $this->existingState)) {
+      $this->existingState[$branch] = array();
+    }
+  }
+
   function deleteBranch($branch) {
     $op = new Operation(
       array($this->ctrl, "deleteBranch"),
       array($branch)
     );
     $this->queue($op, Journal::TEARDOWN_QUEUE);
+  }
+
+  function deleteBranchVerified($branch) {
+    unset($this->existingState[$branch]);
   }
 
   function insertMember($branch, $officename, $memberEmailAddress) {
@@ -101,12 +121,22 @@ class Journal {
     $this->queue($op);
   }
 
+  function insertMemberVerified($branch, $officename, $memberEmailAddress) {
+    // TODO: unique only. Should we sort as well?
+    $this->existingState[$branch]['lists'][$officename]['members'][] = $memberEmailAddress;
+  }
+
   function removeMember($branch, $officename, $memberEmailAddress) {
     $op = new Operation(
       array($this->ctrl, "removeMember"),
       array($branch, $officename, $memberEmailAddress)
     );
     $this->queue($op);
+  }
+
+  function removeMemberVerified($branch, $officename, $memberEmailAddress) {
+    // TODO: unique only. Should we sort as well?
+    unset($this->existingState[$branch]['lists'][$officename]['members'][$memberEmailAddress]);
   }
 
   function insertGroupAlternateAddress($branch, $officename, $alternateAddress) {
@@ -119,12 +149,21 @@ class Journal {
     $this->queue($op);
   }
 
+  function insertGroupAlternateAddressVerified($branch, $officename, $alternateAddress) {
+    // TODO: unique only. Should we sort as well?
+    $this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'][] = $alternateAddress;
+  }
+
   function removeGroupAlternateAddress($branch, $officename, $alternateAddress) {
     $op = new Operation(
       array($this->ctrl, "removeGroupAlternateAddress"),
       array($branch, $officename, $alternateAddress)
     );
     $this->queue($op);
+  }
+
+  function removeGroupAlternateAddressVerified($branch, $officename, $alternateAddress) {
+    unset($this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'][$alternateAddress]);
   }
 
   function insertOffice($branch, $officename, $properties) {
@@ -144,12 +183,26 @@ class Journal {
     $this->queue($op);
   }
 
+  function insertOfficeVerified($branch, $officename, $properties) {
+    $this->existingState[$branch]['lists'][$officename]['properties']['group-name'] = '';
+    $this->existingState[$branch]['lists'][$officename]['properties']['group-email'] = '';
+  }
+
+  function configureOfficeVerified($branch, $officename, $properties) {
+    // TODO: At the moment, all configuration is hardcoded.  When that changes,
+    // we will need to update our state here as well.
+  }
+
   function deleteOffice($branch, $officename, $properties) {
     $op = new Operation(
       array($this->ctrl, "deleteOffice"),
       array($branch, $officename, $properties)
     );
     $this->queue($op);
+  }
+
+  function deleteOfficeVerified($branch, $officename, $properties) {
+    unset($this->existingState[$branch]['lists'][$officename]);
   }
 
   function complete() {

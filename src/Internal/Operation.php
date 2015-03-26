@@ -15,6 +15,23 @@ class Operation {
     $this->verifyParameters = $verifyParams;
   }
 
+  function getRunFunction() {
+    return $runFunction;
+  }
+
+  function getRunFunctionName() {
+    if (is_string($this->runFunction)) {
+      return $this->runFunction;
+    }
+    else {
+      return $this->runFunction[1];
+    }
+  }
+
+  function getRunFunctionParameters() {
+    return $this->runParameters;
+  }
+
   /**
    * Do the operation
    */

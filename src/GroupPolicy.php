@@ -40,4 +40,9 @@ interface GroupPolicy {
    * Normalize an email address
    */
   function normalizeEmail($email);
+
+  /**
+   * Normalize the entire state record
+   */
+  function normalize($state);
 }

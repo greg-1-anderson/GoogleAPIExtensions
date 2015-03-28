@@ -138,4 +138,102 @@ class StandardGroupPolicy implements GroupPolicy {
     }
     return $result;
   }
+
+  function normalize($state) {
+    $result = array();
+    foreach ($state as $branch => $listsAndAliases) {
+      $result[$branch] = $this->normalizeListsAndAliases($branch, $listsAndAliases);
+    }
+    return $result;
+  }
+
+  function normalizeListsAndAliases($branch, $listsAndAliases) {
+    // First, normalize the offices data
+    $offices = array('lists' => array());
+    if (array_key_exists('lists', $listsAndAliases)) {
+      $offices['lists'] = $this->normalizeGroupsData($branch, $listsAndAliases['lists']);
+    }
+    if (array_key_exists('aliases', $listsAndAliases)) {
+      $default = array(
+        'forward-only' => TRUE,
+      );
+      $offices['lists'] += $this->normalizeGroupsData($branch, $listsAndAliases['aliases'], $default);
+    }
+    return $offices;
+  }
+
+  /**
+   * Convert the alias data into a format that can be merged
+   * in with the lists.
+   */
+  function normalizeGroupsData($branch, $aliasGroups, $default = array()) {
+    $result = array();
+    foreach ($aliasGroups as $office => $data) {
+      $data = $this->normalizeMembershipData($data);
+      $data['properties'] += $default;
+      $data['properties'] += array(
+        'group-email' => $this->getGroupEmail($branch, $office),
+        'group-id' => $this->getGroupId($branch, $office),
+      );
+      $propertiesForGroupName = $data['properties'] + array(
+        'branch' => $branch,
+        'office' => $office,
+      );
+      $data['properties'] += array(
+        'group-name' => $this->getGroupName($branch, $office, $propertiesForGroupName),
+      );
+      $result[$office] = $data;
+    }
+    return $result;
+  }
+
+  /**
+   * Take the membership data and normalize it to always
+   * be an associative array with the membership list in
+   * an element named 'members'.
+   *
+   * An array without a 'members' element is presumed to be
+   * a list of user email addresses without any additional
+   * metadata for the group.
+   *
+   * A simple string is treated like an array of one element.
+   */
+  function normalizeMembershipData($data) {
+    if (is_string($data)) {
+      return $this->normalizeMembershipArrayData(array($data));
+    }
+    else {
+      return $this->normalizeMembershipArrayData($data);
+    }
+  }
+
+  /**
+   * If the array is not associative, then convert it to
+   * an array with just a 'members' element containing all
+   * of the original data contents.
+   */
+  function normalizeMembershipArrayData($data) {
+    if (array_key_exists('members', $data)) {
+      $result = $data + array('properties' => array());
+    }
+    else {
+      // TODO: confirm that all of the keys of $data are numeric, and all the values are strings
+      $result = array('members' => $data, 'properties' => array());
+    }
+    return $this->normalizeMemberAddresses($result);
+  }
+
+  /**
+   * Pass all of the email addresses in $data['members']
+   * through the 'normalizeEmail()' function.
+   */
+  function normalizeMemberAddresses($data) {
+    $normalizedAddresses = array();
+    foreach ($data['members'] as $address) {
+      $normalizedAddresses[] = $this->normalizeEmail($address);
+    }
+    $data['members'] = $normalizedAddresses;
+
+    return $data;
+  }
 }

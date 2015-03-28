@@ -7,12 +7,12 @@ interface GroupsController {
   function insertBranch($branch);
   function deleteBranch($branch);
   function verifyBranch($branch);
-  function insertMember($branch, $officename, $memberEmailAddress);
-  function removeMember($branch, $officename, $memberEmailAddress);
-  function verifyMember($branch, $officename, $memberEmailAddress);
-  function insertGroupAlternateAddress($branch, $officename, $alternateAddress);
-  function removeGroupAlternateAddress($branch, $officename, $alternateAddress);
-  function verifyGroupAlternateAddress($branch, $officename, $alternateAddress);
+  function insertMember($branch, $officename, $group_id, $memberEmailAddress);
+  function removeMember($branch, $officename, $group_id, $memberEmailAddress);
+  function verifyMember($branch, $officename, $group_id, $memberEmailAddress);
+  function insertGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress);
+  function removeGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress);
+  function verifyGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress);
   function insertOffice($branch, $officename, $properties);
   function configureOffice($branch, $officename, $properties);
   function deleteOffice($branch, $officename, $properties);

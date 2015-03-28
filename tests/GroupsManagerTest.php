@@ -1,7 +1,7 @@
 <?php
 
 use Westkingdom\GoogleAPIExtensions\GroupsManager;
-use Westkingdom\GoogleAPIExtensions\Utils;
+use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
 use Prophecy\PhpUnit\ProphecyTestCase;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Dumper;
@@ -9,6 +9,7 @@ use Symfony\Component\Yaml\Dumper;
 class GroupsTestCase extends ProphecyTestCase {
 
   protected $initialState = array();
+  protected $policy;
 
   public function setUp() {
     parent::setup();
@@ -16,7 +17,8 @@ class GroupsTestCase extends ProphecyTestCase {
     $groupData = file_get_contents(dirname(__FILE__) . "/testData/westkingdom.org.yaml");
     $parsed = Yaml::parse($groupData);
     // Throw away the first top-level key, use all of the data under it. Ignore any other top-level keys.
-    $this->initialState = Utils::normalize(array_pop($parsed));
+    $this->policy = new StandardGroupPolicy('testdomain.org');
+    $this->initialState = $this->policy->normalize(array_pop($parsed));
   }
 
   public function testNormalize() {
@@ -24,35 +26,44 @@ class GroupsTestCase extends ProphecyTestCase {
 north:
   lists:
     president:
-      - bill@whitehouse.gov
+      - bill@testdomain.org
     secretary:
-      - george@whitehouse.gov
+      - george@testdomain.org
   aliases:
-    all:
-      - president@north.whitehouse.gov
-      - secretary@north.whitehouse.gov");
+    officers:
+      - president@north.testdomain.org
+      - secretary@north.testdomain.org");
 
-    $normalized = Utils::normalize($data);
+    $normalized = $this->policy->normalize($data);
 
     $expected = "
 north:
   lists:
     president:
       members:
-        - bill@whitehouse.gov
-      properties: {  }
+        - bill@testdomain.org
+      properties:
+        group-email: north-president@testdomain.org
+        group-id: north-president@testdomain.org
+        group-name: 'North President'
     secretary:
       members:
-        - george@whitehouse.gov
-      properties: {  }
-    all:
-      members:
-        - president@north.whitehouse.gov
-        - secretary@north.whitehouse.gov
+        - george@testdomain.org
       properties:
-        forward-only: true";
+        group-email: north-secretary@testdomain.org
+        group-id: north-secretary@testdomain.org
+        group-name: 'North Secretary'
+    officers:
+      members:
+        - president@north.testdomain.org
+        - secretary@north.testdomain.org
+      properties:
+        forward-only: true
+        group-email: north-officers@testdomain.org
+        group-id: north-officers@testdomain.org
+        group-name: 'North Officers'";
 
-    $this->assertYamlEquals($normalized, trim($expected));
+    $this->assertYamlEquals(trim($expected), $normalized);
   }
 
   public function assertYamlEquals($data, $expected) {
@@ -89,14 +100,14 @@ north:
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
     $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
-    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($testController->reveal(), $this->initialState);
+    $groupManager = new GroupsManager($testController->reveal(), $this->policy, $this->initialState);
 
     // Prophesize that the new user will be added to the west webministers group.
     $testController->begin()->shouldBeCalled();
-    $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "webminister", "new.admin@somewhere.com"));
-    $testController->insertGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "webminister@westkingdom.org"));
-    $testController->verifyMember()->shouldBeCalled()->withArguments(array("west", "webminister", "new.admin@somewhere.com"));
-    $testController->verifyGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "webminister@westkingdom.org"));
+    $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
+    $testController->insertGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
+    $testController->verifyGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
     $testController->complete()->shouldBeCalled();
 
     // Update the group.  The prophecies are checked against actual
@@ -117,12 +128,12 @@ north:
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
     $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
-    $groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($testController->reveal(), $this->initialState);
+    $groupManager = new GroupsManager($testController->reveal(), $this->policy, $this->initialState);
 
     // Prophesize that a user will be removed from the west webministers group,
     // and then removed again
     $testController->begin()->shouldBeCalled();
-    $testController->removeMember()->shouldBeCalled()->withArguments(array("west", "webminister", "robxxx@sca.org"));
+    $testController->removeMember()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "robxxx@sca.org"));
     $testController->complete()->shouldBeCalled();
 
     // Update the group.  The prophecies are checked against actual

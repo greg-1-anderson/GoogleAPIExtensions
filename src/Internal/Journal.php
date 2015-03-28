@@ -111,58 +111,58 @@ class Journal {
     unset($this->existingState[$branch]);
   }
 
-  function insertMember($branch, $officename, $memberEmailAddress) {
+  function insertMember($branch, $officename, $group_id, $memberEmailAddress) {
     $op = new Operation(
       array($this->ctrl, "insertMember"),
-      array($branch, $officename, $memberEmailAddress),
+      array($branch, $officename, $group_id, $memberEmailAddress),
       array($this->ctrl, "verifyMember"),
-      array($branch, $officename, $memberEmailAddress)
+      array($branch, $officename, $group_id, $memberEmailAddress)
     );
     $this->queue($op);
   }
 
-  function insertMemberVerified($branch, $officename, $memberEmailAddress) {
+  function insertMemberVerified($branch, $officename, $group_id, $memberEmailAddress) {
     // TODO: unique only. Should we sort as well?
     $this->existingState[$branch]['lists'][$officename]['members'][] = $memberEmailAddress;
   }
 
-  function removeMember($branch, $officename, $memberEmailAddress) {
+  function removeMember($branch, $officename, $group_id, $memberEmailAddress) {
     $op = new Operation(
       array($this->ctrl, "removeMember"),
-      array($branch, $officename, $memberEmailAddress)
+      array($branch, $officename, $group_id, $memberEmailAddress)
     );
     $this->queue($op);
   }
 
-  function removeMemberVerified($branch, $officename, $memberEmailAddress) {
+  function removeMemberVerified($branch, $officename, $group_id, $memberEmailAddress) {
     // TODO: unique only. Should we sort as well?
     unset($this->existingState[$branch]['lists'][$officename]['members'][$memberEmailAddress]);
   }
 
-  function insertGroupAlternateAddress($branch, $officename, $alternateAddress) {
+  function insertGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
     $op = new Operation(
       array($this->ctrl, "insertGroupAlternateAddress"),
-      array($branch, $officename, $alternateAddress),
+      array($branch, $officename, $group_id, $alternateAddress),
       array($this->ctrl, "verifyGroupAlternateAddress"),
-      array($branch, $officename, $alternateAddress)
+      array($branch, $officename, $group_id, $alternateAddress)
     );
     $this->queue($op);
   }
 
-  function insertGroupAlternateAddressVerified($branch, $officename, $alternateAddress) {
+  function insertGroupAlternateAddressVerified($branch, $officename, $group_id, $alternateAddress) {
     // TODO: unique only. Should we sort as well?
     $this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'][] = $alternateAddress;
   }
 
-  function removeGroupAlternateAddress($branch, $officename, $alternateAddress) {
+  function removeGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
     $op = new Operation(
       array($this->ctrl, "removeGroupAlternateAddress"),
-      array($branch, $officename, $alternateAddress)
+      array($branch, $officename, $group_id, $alternateAddress)
     );
     $this->queue($op);
   }
 
-  function removeGroupAlternateAddressVerified($branch, $officename, $alternateAddress) {
+  function removeGroupAlternateAddressVerified($branch, $officename, $group_id, $alternateAddress) {
     unset($this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'][$alternateAddress]);
   }
 
@@ -184,8 +184,9 @@ class Journal {
   }
 
   function insertOfficeVerified($branch, $officename, $properties) {
-    $this->existingState[$branch]['lists'][$officename]['properties']['group-name'] = '';
-    $this->existingState[$branch]['lists'][$officename]['properties']['group-email'] = '';
+    foreach (array('group-name', 'group-email') as $key) {
+      $this->existingState[$branch]['lists'][$officename]['properties'][$key] = $properties[$key];
+    }
   }
 
   function configureOfficeVerified($branch, $officename, $properties) {

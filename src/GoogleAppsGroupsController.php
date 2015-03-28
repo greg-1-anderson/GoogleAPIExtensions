@@ -17,16 +17,14 @@ class GoogleAppsGroupsController implements GroupsController {
   protected $batch;
   protected $directoryService;
   protected $groupSettingsService;
-  protected $groupPolicy;
   protected $autoExecute = FALSE;
 
   /**
    * @param $client Google Apps API client object
-   * @param $policy Policy object that controls group names and behaviors
    * @param $batch Google Apps batch object. Optional; one will be created
    * if none provided.
    */
-  function __construct($client, $policy, $batch = NULL) {
+  function __construct($client, $batch = NULL) {
     $this->client = $client;
     $this->batch = $batch;
     if (!isset($batch)) {
@@ -35,18 +33,16 @@ class GoogleAppsGroupsController implements GroupsController {
     }
     $this->directoryService = new \Google_Service_Directory($client);
     $this->groupSettingsService = new \Google_Service_Groupssettings($client);
-
-    $this->groupPolicy = $policy;
   }
 
   /**
    * Fetch and export memberships using the Google API.
    */
-  function fetch() {
+  function fetch($domain) {
     $result = array();
 
     // Fetch all the groups in this domain
-    $opt = array('domain' => $this->groupPolicy->getDomain());
+    $opt = array('domain' => $domain);
     $data = $this->directoryService->groups->listGroups($opt);
     $groups = $data->getGroups();
 
@@ -88,12 +84,9 @@ class GoogleAppsGroupsController implements GroupsController {
     return TRUE;
   }
 
-  function insertMember($branch, $officename, $memberEmailAddress) {
-    $group_id = $this->groupPolicy->getGroupId($branch, $officename);
-    $normalized_email = $this->groupPolicy->normalizeEmail($memberEmailAddress);
-
+  function insertMember($branch, $officename, $group_id, $memberEmailAddress) {
     $member = new \Google_Service_Directory_Member(array(
-                            'email' => $normalized_email,
+                            'email' => $memberEmailAddress,
                             'role'  => 'MEMBER',
                             'type'  => 'USER'));
 
@@ -101,21 +94,18 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->batch->add($req);
   }
 
-  function removeMember($branch, $officename, $memberEmailAddress) {
-    $group_id = $this->groupPolicy->getGroupId($branch, $officename);
-    $normalized_email = $this->groupPolicy->normalizeEmail($memberEmailAddress);
-
-    $req = $this->directoryService->members->delete($group_id, $normalized_email);
+  function removeMember($branch, $officename, $group_id, $memberEmailAddress) {
+    $req = $this->directoryService->members->delete($group_id, $memberEmailAddress);
     $this->batch->add($req);
   }
 
-  function verifyMember($branch, $officename, $memberEmailAddress) {
+  function verifyMember($branch, $officename, $group_id, $memberEmailAddress) {
     return TRUE;
   }
 
   function insertOffice($branch, $officename, $properties) {
-    $group_email = $this->groupPolicy->getGroupEmail($branch, $officename);
-    $group_name = $this->groupPolicy->getGroupName($branch, $officename, $properties);
+    $group_email = $properties['group-email'];
+    $group_name = $properties['group-name'];
 
     $newgroup = new \Google_Service_Directory_Group(array(
       'email' => "$group_email",
@@ -127,9 +117,10 @@ class GoogleAppsGroupsController implements GroupsController {
   }
 
   function configureOffice($branch, $officename, $properties) {
+    $groupId = $properties['group-id'];
     $settingData = new \Google_Service_Groupssettings_Groups();
 
-    // TODO: allow the group policy to dictate what the settings should be.
+    // TODO: pull settings from properties
 
     // INVITED_CAN_JOIN or CAN_REQUEST_TO_JOIN, etc.
     $settingData->setWhoCanJoin("INVITED_CAN_JOIN");
@@ -137,8 +128,7 @@ class GoogleAppsGroupsController implements GroupsController {
     // ANYONE_CAN_POST, etc.
     $settingData->setWhoCanPostMessage("ANYONE_CAN_POST");
 
-    $group_id = $this->groupPolicy->getGroupId($branch, $officename);
-    $req = $this->groupSettingsService->groups->patch($group_id, $settingData);
+    $req = $this->groupSettingsService->groups->patch($groupId, $settingData);
     $this->batch->add($req);
 
     if (isset($properties['alternate-addresses'])) {
@@ -146,15 +136,15 @@ class GoogleAppsGroupsController implements GroupsController {
         $newalias = new \Google_Service_Directory_Alias(array(
           'alias' => $alternate_address,
         ));
-        $req = $this->directoryService->groups_aliases->insert($group_id, $newalias);
+        $req = $this->directoryService->groups_aliases->insert($groupId, $newalias);
         $this->batch->add($req);
       }
     }
   }
 
   function deleteOffice($branch, $officename, $properties) {
-    $group_id = $this->groupPolicy->getGroupId($branch, $officename);
-    $req = $this->directoryService->groups->delete($group_id);
+    $groupId = $properties['group-id'];
+    $req = $this->directoryService->groups->delete($groupId);
     $this->batch->add($req);
   }
 
@@ -166,28 +156,22 @@ class GoogleAppsGroupsController implements GroupsController {
     return TRUE;
   }
 
-  function insertGroupAlternateAddress($branch, $officename, $alternateAddress) {
-    $group_id = $this->groupPolicy->getGroupId($branch, $officename);
-    $normalized_email = $this->groupPolicy->normalizeEmail($alternateAddress);
-
+  function insertGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
     $newAlternateAddress = new \Google_Service_Directory_Alias(array(
-      'alias' => $normalized_email,
+      'alias' => $alternateAddress,
       ));
     $req = $this->directoryService->groups_aliases->insert($group_id, $newAlternateAddress);
     $this->batch->add($req);
   }
 
-  function removeGroupAlternateAddress($branch, $officename, $alternateAddress) {
-    $group_id = $this->groupPolicy->getGroupId($branch, $officename);
-    $normalized_email = $this->groupPolicy->normalizeEmail($alternateAddress);
-
+  function removeGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
     // n.b. inserting an alias also adds a non-editable alias, but deleting
     // an alias does not delete its non-editable counterpart.
-    $req = $this->directoryService->groups_aliases->delete($group_id, $normalized_email);
+    $req = $this->directoryService->groups_aliases->delete($group_id, $alternateAddress);
     $this->batch->add($req);
   }
 
-  function verifyGroupAlternateAddress($branch, $officename, $alternateAddress) {
+  function verifyGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
     return TRUE;
   }
 

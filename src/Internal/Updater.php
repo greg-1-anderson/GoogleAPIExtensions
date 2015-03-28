@@ -3,7 +3,6 @@
 namespace Westkingdom\GoogleAPIExtensions\Internal;
 
 use WestKingdom\GoogleAPIExtensions\GroupsController;
-use WestKingdom\GoogleAPIExtensions\Utils;
 
 class Updater {
   protected $ctrl;
@@ -45,7 +44,6 @@ class Updater {
    */
   function update($memberships, $existingState) {
     $this->ctrl->begin();
-    $memberships = Utils::normalize($memberships);
 
     foreach ($memberships as $branch => $officesLists) {
       $offices = $officesLists['lists'];
@@ -69,10 +67,10 @@ class Updater {
   function updateBranch($branch, $updateOffices, $existingOffices) {
     foreach ($updateOffices as $officename => $officeData) {
       if (array_key_exists($officename, $existingOffices)) {
-        $this->updateOfficeMembers($branch, $officename, $officeData['members'], $existingOffices[$officename]['members']);
-        $newAlternateAddresses = Utils::getAlternateAddresses($branch, $officename, $officeData);
-        $existingAlternateAddresses = Utils::getAlternateAddresses($branch, $officename, $existingOffices[$officename]);
-        $this->updateOfficeAlternateAddresses($branch, $officename, $newAlternateAddresses, $existingAlternateAddresses);
+        $this->updateOfficeMembers($branch, $officename, $officeData['properties']['group-id'], $officeData['members'], $existingOffices[$officename]['members']);
+        $newAlternateAddresses = Updater::getAlternateAddresses($branch, $officename, $officeData);
+        $existingAlternateAddresses = Updater::getAlternateAddresses($branch, $officename, $existingOffices[$officename]);
+        $this->updateOfficeAlternateAddresses($branch, $officename, $officeData['properties']['group-id'], $newAlternateAddresses, $existingAlternateAddresses);
       }
       else {
         $this->insertOffice($branch, $officename, $officeData);
@@ -94,40 +92,48 @@ class Updater {
     $this->ctrl->deleteBranch($branch);
   }
 
-  function updateOfficeMembers($branch, $officename, $updateMembers, $existingMembers) {
+  function updateOfficeMembers($branch, $officename, $groupId, $updateMembers, $existingMembers) {
     foreach ($updateMembers as $emailAddress) {
       if (!in_array($emailAddress, $existingMembers)) {
-        $this->ctrl->insertMember($branch, $officename, $emailAddress);
+        $this->ctrl->insertMember($branch, $officename, $groupId, $emailAddress);
       }
     }
     foreach ($existingMembers as $emailAddress) {
       if (!in_array($emailAddress, $updateMembers)) {
-        $this->ctrl->removeMember($branch, $officename, $emailAddress);
+        $this->ctrl->removeMember($branch, $officename, $groupId, $emailAddress);
       }
     }
   }
 
-  function updateOfficeAlternateAddresses($branch, $officename, $newAlternateAddresses, $existingAlternateAddresses) {
+  function updateOfficeAlternateAddresses($branch, $officename, $groupId, $newAlternateAddresses, $existingAlternateAddresses) {
     foreach ($newAlternateAddresses as $emailAddress) {
       if (!in_array($emailAddress, $existingAlternateAddresses)) {
-        $this->ctrl->insertGroupAlternateAddress($branch, $officename, $emailAddress);
+        $this->ctrl->insertGroupAlternateAddress($branch, $officename, $groupId, $emailAddress);
       }
     }
     foreach ($existingAlternateAddresses as $emailAddress) {
       if (!in_array($emailAddress, $newAlternateAddresses)) {
-        $this->ctrl->removeGroupAlternateAddress($branch, $officename, $emailAddress);
+        $this->ctrl->removeGroupAlternateAddress($branch, $officename, $groupId, $emailAddress);
       }
     }
   }
 
   function insertOffice($branch, $officename, $officeData) {
     $this->ctrl->insertOffice($branch, $officename, $officeData['properties']);
-    $this->updateOfficeMembers($branch, $officename, $officeData['members'], array());
-    $newAlternateAddresses = $this->getAlternateAddresses($branch, $officename, $officeData);
-    $this->updateOfficeAlternateAddresses($branch, $officename, $newAlternateAddresses, array());
+    $this->updateOfficeMembers($branch, $officename, $officeData['properties']['group-id'], $officeData['members'], array());
+    $newAlternateAddresses = Updater::getAlternateAddresses($branch, $officename, $officeData['properties']['group-id'], $officeData);
+    $this->updateOfficeAlternateAddresses($branch, $officename, $officeData['properties']['group-id'], $newAlternateAddresses, array());
   }
 
   function deleteOffice($branch, $officename, $officeData) {
     $this->ctrl->deleteOffice($branch, $officename, $officeData['properties']);
+  }
+
+  static function getAlternateAddresses($branch, $officename, $officeData) {
+    $result = array();
+    if (isset($officeData['properties']['alternate-addresses'])) {
+      $result = (array)$officeData['properties']['alternate-addresses'];
+    }
+    return $result;
   }
 }

@@ -1,7 +1,6 @@
 <?php
 
 use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
-use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
 use Westkingdom\GoogleAPIExtensions\GroupPolicy;
 use Westkingdom\GoogleAPIExtensions\BatchWrapper;
 
@@ -10,7 +9,6 @@ use Symfony\Component\Yaml\Dumper;
 class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
 
   protected $client;
-  protected $policy;
 
   public function setUp() {
     parent::setup();
@@ -19,8 +17,6 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
     $this->client = new Google_Client();
     $this->client->setApplicationName("Google Apps Groups Controller Test");
     $this->client->setUseBatch(true);
-    // Create a standard group policy for testdomain.com.
-    $this->policy = new StandardGroupPolicy('testdomain.com');
   }
 
   function testGroupsController() {
@@ -31,58 +27,69 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
 
     // Create a new Google Apps group controller, and add some users
     // and groups to it.
-    $controller = new GoogleAppsGroupsController($this->client, $this->policy, $batch);
+    $controller = new GoogleAppsGroupsController($this->client, $batch);
 
-    $controller->insertOffice('north', 'president', array());
-    $controller->configureOffice('north', 'president', array());
-    $controller->insertMember('north', 'president', 'franklin@testdomain.com');
-    $controller->insertGroupAlternateAddress('north', 'president', 'elpresidente@testdomain.com');
-    $controller->removeMember('north', 'president', 'franklin@testdomain.com');
-    $controller->removeGroupAlternateAddress('north', 'president', 'elpresidente');
-    $controller->insertMember('north', 'vice-president', 'Garner');
-    $controller->removeMember('north', 'vice-president', 'Garner');
-    $controller->deleteOffice('north', 'president', array());
+    $presidentProperties = array(
+      'group-email' => 'north-president@testdomain.org',
+      'group-id' => 'north-president@testdomain.org',
+      'group-name' => 'North President',
+    );
+    $vicePresidentProperties = array(
+      'group-email' => 'north-vicepresident@testdomain.org',
+      'group-id' => 'north-vicepresident@testdomain.org',
+      'group-name' => 'North Vice-President',
+    );
+
+    $controller->insertOffice('north', 'president', $presidentProperties);
+    $controller->configureOffice('north', 'president', $presidentProperties);
+    $controller->insertMember('north', 'president', $presidentProperties['group-id'], 'franklin@testdomain.org');
+    $controller->insertGroupAlternateAddress('north', 'president', $presidentProperties['group-id'], 'elpresidente@testdomain.org');
+    $controller->removeMember('north', 'president', $presidentProperties['group-id'], 'franklin@testdomain.org');
+    $controller->removeGroupAlternateAddress('north', 'president', $presidentProperties['group-id'], 'elpresidente@testdomain.org');
+    $controller->insertMember('north', 'vice-president', $vicePresidentProperties['group-id'], 'garner@testdomain.org');
+    $controller->removeMember('north', 'vice-president', $vicePresidentProperties['group-id'], 'garner@testdomain.org');
+    $controller->deleteOffice('north', 'president', $presidentProperties);
 
     // The expected list of requests corresponding to the calls above:
     $expected = <<< EOT
 -
   requestMethod: POST
   url: /admin/directory/v1/groups
-  email: north-president@testdomain.com
+  email: north-president@testdomain.org
   name: 'North President'
 -
   requestMethod: PATCH
-  url: /groups/v1/groups/north-president%40testdomain.com
+  url: /groups/v1/groups/north-president%40testdomain.org
   whoCanJoin: INVITED_CAN_JOIN
   whoCanPostMessage: ANYONE_CAN_POST
 -
   requestMethod: POST
-  url: /admin/directory/v1/groups/north-president%40testdomain.com/members
-  email: franklin@testdomain.com
+  url: /admin/directory/v1/groups/north-president%40testdomain.org/members
+  email: franklin@testdomain.org
   role: MEMBER
   type: USER
 -
   requestMethod: POST
-  url: /admin/directory/v1/groups/north-president%40testdomain.com/aliases
-  alias: elpresidente@testdomain.com
+  url: /admin/directory/v1/groups/north-president%40testdomain.org/aliases
+  alias: elpresidente@testdomain.org
 -
   requestMethod: DELETE
-  url: /admin/directory/v1/groups/north-president%40testdomain.com/members/franklin%40testdomain.com
+  url: /admin/directory/v1/groups/north-president%40testdomain.org/members/franklin%40testdomain.org
 -
   requestMethod: DELETE
-  url: /admin/directory/v1/groups/north-president%40testdomain.com/aliases/elpresidente%40testdomain.com
+  url: /admin/directory/v1/groups/north-president%40testdomain.org/aliases/elpresidente%40testdomain.org
 -
   requestMethod: POST
-  url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members
-  email: garner@testdomain.com
+  url: /admin/directory/v1/groups/north-vicepresident%40testdomain.org/members
+  email: garner@testdomain.org
   role: MEMBER
   type: USER
 -
   requestMethod: DELETE
-  url: /admin/directory/v1/groups/north-vice-president%40testdomain.com/members/garner%40testdomain.com
+  url: /admin/directory/v1/groups/north-vicepresident%40testdomain.org/members/garner%40testdomain.org
 -
   requestMethod: DELETE
-  url: /admin/directory/v1/groups/north-president%40testdomain.com
+  url: /admin/directory/v1/groups/north-president%40testdomain.org
 EOT;
 
     $requests = $batch->getSimplifiedRequests();

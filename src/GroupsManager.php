@@ -6,6 +6,7 @@ use Westkingdom\GoogleAPIExtensions\Internal\Journal;
 
 class GroupsManager {
   protected $ctrl;
+  protected $policy;
   protected $updater;
   protected $journal;
 
@@ -13,9 +14,10 @@ class GroupsManager {
    * @param $ctrl control object that does actual actions
    * @param $state initial state
    */
-  function __construct(GroupsController $ctrl, $state, $updater = NULL) {
+  function __construct(GroupsController $ctrl, $policy, $state, $updater = NULL) {
     $this->ctrl = $ctrl;
-    $this->journal = new Journal($ctrl, Utils::normalize($state));
+    $this->policy = $policy;
+    $this->journal = new Journal($ctrl, $state);
 
     if (isset($updater)) {
       $this->updater = $updater;
@@ -29,8 +31,8 @@ class GroupsManager {
     $authenticator = ServiceAccountAuthenticator($applicationName);
     $client = $authenticator->authenticate();
     $policy = new StandardGroupPolicy($domain);
-    $controller = new GoogleAppsGroupsController($client, $policy);
-    $groupManager = new GroupsManager($controller, $currentState);
+    $controller = new GoogleAppsGroupsController($client);
+    $groupManager = new GroupsManager($controller, $policy, $currentState);
     return $groupManager;
   }
 
@@ -62,7 +64,7 @@ class GroupsManager {
    *    and an alias just passes the email through.
    */
   function update($memberships) {
-    $this->updater->update($memberships, $this->journal->getExistingState());
+    $this->updater->update($this->policy->normalize($memberships), $this->journal->getExistingState());
     return $this->journal->getExistingState();
   }
 

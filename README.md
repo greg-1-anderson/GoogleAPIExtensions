@@ -141,8 +141,8 @@ use Westkingdom\GoogleAPIExtensions\GroupsManager;
 $authenticator = ServiceAccountAuthenticator("My application");
 $client = $authenticator->authenticate();
 $policy = new StandardGroupPolicy('mydomain.org');
-$controller = new GoogleAppsGroupsController($client, $policy);
-$groupManager = new GroupsManager($controller, $currentState);
+$controller = new GoogleAppsGroupsController($client);
+$groupManager = new GroupsManager($controller, $policy, $currentState);
 $groupManager->update($newState);
 ```
 

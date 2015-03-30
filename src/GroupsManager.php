@@ -63,7 +63,7 @@ class GroupsManager {
       $offices = $officesLists['lists'];
       // Next, update or insert, depending on whether this branch is new.
       if (array_key_exists($branch, $existingState)) {
-        $this->updateBranch($branch, $offices, $existingState[$branch]['lists']);
+        $this->updateBranch($branch, $offices);
       }
       else {
         $this->insertBranch($branch, $offices);
@@ -78,13 +78,12 @@ class GroupsManager {
     $this->journal->complete();
   }
 
-  function updateBranch($branch, $updateOffices, $existingOffices) {
+  function updateBranch($branch, $updateOffices) {
+    $existingState = $this->journal->getExistingState();
+    $existingOffices = $existingState[$branch]['lists'];
     foreach ($updateOffices as $officename => $officeData) {
       if (array_key_exists($officename, $existingOffices)) {
-        $this->updateOfficeMembers($branch, $officename, $officeData['properties']['group-id'], $officeData['members'], $existingOffices[$officename]['members']);
-        $newAlternateAddresses = GroupsManager::getAlternateAddresses($branch, $officename, $officeData);
-        $existingAlternateAddresses = GroupsManager::getAlternateAddresses($branch, $officename, $existingOffices[$officename]);
-        $this->updateOfficeAlternateAddresses($branch, $officename, $officeData['properties']['group-id'], $newAlternateAddresses, $existingAlternateAddresses);
+        $this->updateOffice($branch, $officename, $officeData);
       }
       else {
         $this->insertOffice($branch, $officename, $officeData);
@@ -104,6 +103,15 @@ class GroupsManager {
 
   function deleteBranch($branch, $removingOffices) {
     $this->journal->deleteBranch($branch);
+  }
+
+  function updateOffice($branch, $officename, $officeData) {
+    $existingState = $this->journal->getExistingState();
+    $existingOffices = $existingState[$branch]['lists'];
+    $this->updateOfficeMembers($branch, $officename, $officeData['properties']['group-id'], $officeData['members'], $existingOffices[$officename]['members']);
+    $newAlternateAddresses = GroupsManager::getAlternateAddresses($branch, $officename, $officeData);
+    $existingAlternateAddresses = GroupsManager::getAlternateAddresses($branch, $officename, $existingOffices[$officename]);
+    $this->updateOfficeAlternateAddresses($branch, $officename, $officeData['properties']['group-id'], $newAlternateAddresses, $existingAlternateAddresses);
   }
 
   function updateOfficeMembers($branch, $officename, $groupId, $updateMembers, $existingMembers) {

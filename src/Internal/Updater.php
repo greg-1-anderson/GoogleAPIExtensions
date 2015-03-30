@@ -5,14 +5,14 @@ namespace Westkingdom\GoogleAPIExtensions\Internal;
 use WestKingdom\GoogleAPIExtensions\GroupsController;
 
 class Updater {
-  protected $ctrl;
+  protected $journal;
 
   /**
-   * @param $ctrl control object that does actual actions
+   * @param $journal control object that does actual actions
    * @param $state initial state
    */
-  function __construct(Journal $ctrl) {
-    $this->ctrl = $ctrl;
+  function __construct(Journal $journal) {
+    $this->journal = $journal;
   }
 
   /**
@@ -43,7 +43,7 @@ class Updater {
    *    and an alias just passes the email through.
    */
   function update($memberships, $existingState) {
-    $this->ctrl->begin();
+    $this->journal->begin();
 
     foreach ($memberships as $branch => $officesLists) {
       $offices = $officesLists['lists'];
@@ -61,7 +61,7 @@ class Updater {
         $this->deleteBranch($branch, $offices);
       }
     }
-    $this->ctrl->complete();
+    $this->journal->complete();
   }
 
   function updateBranch($branch, $updateOffices, $existingOffices) {
@@ -84,23 +84,23 @@ class Updater {
   }
 
   function insertBranch($branch, $newOffices) {
-    $this->ctrl->insertBranch($branch);
+    $this->journal->insertBranch($branch);
     $this->updateBranch($branch, $newOffices, array());
   }
 
   function deleteBranch($branch, $removingOffices) {
-    $this->ctrl->deleteBranch($branch);
+    $this->journal->deleteBranch($branch);
   }
 
   function updateOfficeMembers($branch, $officename, $groupId, $updateMembers, $existingMembers) {
     foreach ($updateMembers as $emailAddress) {
       if (!in_array($emailAddress, $existingMembers)) {
-        $this->ctrl->insertMember($branch, $officename, $groupId, $emailAddress);
+        $this->journal->insertMember($branch, $officename, $groupId, $emailAddress);
       }
     }
     foreach ($existingMembers as $emailAddress) {
       if (!in_array($emailAddress, $updateMembers)) {
-        $this->ctrl->removeMember($branch, $officename, $groupId, $emailAddress);
+        $this->journal->removeMember($branch, $officename, $groupId, $emailAddress);
       }
     }
   }
@@ -108,25 +108,25 @@ class Updater {
   function updateOfficeAlternateAddresses($branch, $officename, $groupId, $newAlternateAddresses, $existingAlternateAddresses) {
     foreach ($newAlternateAddresses as $emailAddress) {
       if (!in_array($emailAddress, $existingAlternateAddresses)) {
-        $this->ctrl->insertGroupAlternateAddress($branch, $officename, $groupId, $emailAddress);
+        $this->journal->insertGroupAlternateAddress($branch, $officename, $groupId, $emailAddress);
       }
     }
     foreach ($existingAlternateAddresses as $emailAddress) {
       if (!in_array($emailAddress, $newAlternateAddresses)) {
-        $this->ctrl->removeGroupAlternateAddress($branch, $officename, $groupId, $emailAddress);
+        $this->journal->removeGroupAlternateAddress($branch, $officename, $groupId, $emailAddress);
       }
     }
   }
 
   function insertOffice($branch, $officename, $officeData) {
-    $this->ctrl->insertOffice($branch, $officename, $officeData['properties']);
+    $this->journal->insertOffice($branch, $officename, $officeData['properties']);
     $this->updateOfficeMembers($branch, $officename, $officeData['properties']['group-id'], $officeData['members'], array());
     $newAlternateAddresses = Updater::getAlternateAddresses($branch, $officename, $officeData['properties']['group-id'], $officeData);
     $this->updateOfficeAlternateAddresses($branch, $officename, $officeData['properties']['group-id'], $newAlternateAddresses, array());
   }
 
   function deleteOffice($branch, $officename, $officeData) {
-    $this->ctrl->deleteOffice($branch, $officename, $officeData['properties']);
+    $this->journal->deleteOffice($branch, $officename, $officeData['properties']);
   }
 
   static function getAlternateAddresses($branch, $officename, $officeData) {

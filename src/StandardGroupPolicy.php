@@ -42,7 +42,7 @@ class StandardGroupPolicy implements GroupPolicy {
     $this->defaults = $defaults + array(
       'domain' => $domain,
       'group-name' => '${branch} ${office}',
-      'group-email' => '$(branch)-$(office)@$(domain)',
+      'group-email' => '$(simplified-branch)-$(simplified-office)@$(domain)',
       'top-level-group' => preg_replace('/\.[a-z]*$/', '', $domain),
       'top-level-group-email' => '$(office)@$(domain)',
     );
@@ -61,11 +61,16 @@ class StandardGroupPolicy implements GroupPolicy {
    * email address is to use branch-office@domain.
    */
   function getGroupEmail($branch, $officename) {
-    $properties = array(
+    return $this->getProperty('group-email', $this->defaultGroupProperties($branch, $officename));
+  }
+
+  function defaultGroupProperties($branch, $officename) {
+    return array(
       'branch' => $branch,
       'office' => $officename,
+      'simplified-branch' => $this->simplifyBranchName($branch),
+      'simplified-office' => $this->simplifyOfficeName($officename),
     );
-    return $this->getProperty('group-email', $properties);
   }
 
   /**
@@ -74,11 +79,7 @@ class StandardGroupPolicy implements GroupPolicy {
    * not provided, then "Branch Office" is used instead.
    */
   function getGroupName($branch, $officename, $properties = array()) {
-    $properties += array(
-      'branch' => $branch,
-      'office' => $officename,
-    );
-    return $this->getProperty('group-name', $properties);
+    return $this->getProperty('group-name', $this->defaultGroupProperties($branch, $officename));
   }
 
   /**
@@ -102,6 +103,25 @@ class StandardGroupPolicy implements GroupPolicy {
     }
     return strtolower($email);
   }
+
+  /**
+   * Simplify a branch name, e.g. for inclusion in an email address
+   */
+  function simplifyBranchName($branch) {
+    return $this->simplify($branch);
+  }
+
+  /**
+   * Simplify an office name, e.g. for inclusion in an email address
+   */
+  function simplifyOfficeName($office) {
+    return $this->simplify($office);
+  }
+
+  function simplify($name) {
+    return preg_replace('/[^a-z0-9]/', '', strtolower($name));
+  }
+
   function availableDefaults() {
     return array_keys($this->defaults);
   }
@@ -123,7 +143,7 @@ class StandardGroupPolicy implements GroupPolicy {
 
   protected function applyTemplate($template, $properties) {
     $result = $template;
-    preg_match_all('/\$([{(])([a-z]*)[})]/', $template, $matches, PREG_SET_ORDER);
+    preg_match_all('/\$([{(])([a-z-]*)[})]/', $template, $matches, PREG_SET_ORDER);
     foreach ($matches as $match) {
       $replacementPropertyId = $match[2];
       $uppercase = $match[1] == '{';
@@ -175,10 +195,7 @@ class StandardGroupPolicy implements GroupPolicy {
         'group-email' => $this->getGroupEmail($branch, $office),
         'group-id' => $this->getGroupId($branch, $office),
       );
-      $propertiesForGroupName = $data['properties'] + array(
-        'branch' => $branch,
-        'office' => $office,
-      );
+      $propertiesForGroupName = $data['properties'] + $this->defaultGroupProperties($branch, $office);
       $data['properties'] += array(
         'group-name' => $this->getGroupName($branch, $office, $propertiesForGroupName),
       );

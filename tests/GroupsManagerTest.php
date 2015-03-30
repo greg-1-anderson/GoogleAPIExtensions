@@ -27,6 +27,8 @@ north:
   lists:
     president:
       - bill@testdomain.org
+    vice-president:
+      - walter@testdomain.org
     secretary:
       - george@testdomain.org
   aliases:
@@ -46,6 +48,13 @@ north:
         group-email: north-president@testdomain.org
         group-id: north-president@testdomain.org
         group-name: 'North President'
+    vice-president:
+      members:
+        - walter@testdomain.org
+      properties:
+        group-email: north-vicepresident@testdomain.org
+        group-id: north-vicepresident@testdomain.org
+        group-name: 'North Vice-president'
     secretary:
       members:
         - george@testdomain.org

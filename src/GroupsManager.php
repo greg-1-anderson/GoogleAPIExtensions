@@ -16,6 +16,9 @@ class GroupsManager {
   function __construct(GroupsController $ctrl, $policy, $state) {
     $this->ctrl = $ctrl;
     $this->policy = $policy;
+    if (!isset($state['_aggregated']['lists'])) {
+      $state['_aggregated']['lists'] = array();
+    }
     $this->journal = new Journal($ctrl, $state);
   }
 
@@ -24,7 +27,7 @@ class GroupsManager {
     $client = $authenticator->authenticate();
     $policy = new StandardGroupPolicy($domain);
     $controller = new GoogleAppsGroupsController($client);
-    $groupManager = new GroupsManager($controller, $policy, $currentState);
+    $groupManager = new GroupsManager($controller, $policy, $state);
     return $groupManager;
   }
 
@@ -56,6 +59,8 @@ class GroupsManager {
    *    and an alias just passes the email through.
    */
   function update($memberships) {
+    $memberships['_aggregated']['lists'] = $this->generateAggregatedGroups($memberships);
+    $memberships = $this->policy->normalize($memberships);
     $existingState = $this->journal->getExistingState();
     $this->journal->begin();
 
@@ -78,9 +83,46 @@ class GroupsManager {
     $this->journal->complete();
   }
 
+  /**
+   * Generate aggragated groups
+   */
+  function generateAggregatedGroups($memberships) {
+    $aggregatedGroups = array();
+    unset($memberships['_aggregated']);
+    foreach ($memberships as $branch => $offices) {
+      foreach ($offices['lists'] as $office => $officeData) {
+        // Get the list of aggragated lists for this group.
+        $aggragatedLists = $this->policy->getAggregatedGroups($branch, $office, $officeData['properties']);
+        foreach ($aggragatedLists as $aggregateName => $aggregateGroupInfo) {
+          $this->addAggregateGroupMember($aggregatedGroups, $branch, $office, $aggregateName, $aggregateGroupInfo);
+        }
+      }
+    }
+    return $aggregatedGroups;
+  }
+
+  function addAggregateGroupMember(&$aggregatedGroups, $branch, $office, $aggregatedGroupName, $aggregatedGroupProperties) {
+    $emailAddress = $this->policy->getGroupEmail($branch, $office);
+    if (!isset($aggregatedGroups[$aggregatedGroupName])) {
+      $aggregatedGroups[$aggregatedGroupName] = array(
+        'properties' => $aggregatedGroupProperties,
+      );
+    }
+    $aggregatedGroups[$aggregatedGroupName]['members'][] = $emailAddress;
+  }
+
+  function execute() {
+    $this->journal->execute();
+    return $this->journal->getExistingState();
+  }
+
   function updateBranch($branch, $updateOffices) {
     $existingState = $this->journal->getExistingState();
     $existingOffices = $existingState[$branch]['lists'];
+    return $this->updateAlteredBranch($branch, $updateOffices, $existingOffices);
+  }
+
+  function updateAlteredBranch($branch, $updateOffices, $existingOffices) {
     foreach ($updateOffices as $officename => $officeData) {
       if (array_key_exists($officename, $existingOffices)) {
         $this->updateOffice($branch, $officename, $officeData);
@@ -96,11 +138,13 @@ class GroupsManager {
     }
   }
 
+  // n.b. does not work as an entrypoint yet, because does not update aggregated groups
   function insertBranch($branch, $newOffices) {
     $this->journal->insertBranch($branch);
-    $this->updateBranch($branch, $newOffices, array());
+    $this->updateAlteredBranch($branch, $newOffices, array());
   }
 
+  // n.b. does not work as an entrypoint yet, because does not update aggregated groups
   function deleteBranch($branch, $removingOffices) {
     $this->journal->deleteBranch($branch);
   }
@@ -140,6 +184,7 @@ class GroupsManager {
     }
   }
 
+  // n.b. does not work as an entrypoint yet, because does not update aggregated groups
   function insertOffice($branch, $officename, $officeData) {
     $this->journal->insertOffice($branch, $officename, $officeData['properties']);
     $this->updateOfficeMembers($branch, $officename, $officeData['properties']['group-id'], $officeData['members'], array());
@@ -147,8 +192,9 @@ class GroupsManager {
     $this->updateOfficeAlternateAddresses($branch, $officename, $officeData['properties']['group-id'], $newAlternateAddresses, array());
   }
 
+  // n.b. does not work as an entrypoint yet, because does not update aggregated groups
   function deleteOffice($branch, $officename, $officeData) {
-    $this->journal->deleteOffice($branch, $officename, $officeData['properties']);
+    $this->journal->deleteOffice($branch, $officename, isset($officeData['properties']) ? $officeData['properties'] : array());
   }
 
   static function getAlternateAddresses($branch, $officename, $officeData) {
@@ -157,10 +203,5 @@ class GroupsManager {
       $result = (array)$officeData['properties']['alternate-addresses'];
     }
     return $result;
-  }
-
-  function execute() {
-    $this->journal->execute();
-    return $this->journal->getExistingState();
   }
 }

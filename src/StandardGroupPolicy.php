@@ -45,6 +45,12 @@ class StandardGroupPolicy implements GroupPolicy {
       'group-email' => '$(simplified-branch)-$(simplified-office)@$(domain)',
       'top-level-group' => preg_replace('/\.[a-z]*$/', '', $domain),
       'top-level-group-email' => '$(office)@$(domain)',
+      'aggragate-all-name' => 'All ${office-plural}',
+      'aggrageat-all-key' => 'all-$(simplified-office-plural)',
+      'aggrageat-all-email' => 'all-$(simplified-office-plural)@$(domain)',
+      'aggragate-branch-officers-name' => '${branch} Officers',
+      'aggragate-branch-officers-key' => '$(simplified-branch)-officers',
+      'aggragate-branch-officers-email' => '$(simplified-branch)-officers@$(domain)',
     );
   }
 
@@ -64,13 +70,35 @@ class StandardGroupPolicy implements GroupPolicy {
     return $this->getProperty('group-email', $this->defaultGroupProperties($branch, $officename));
   }
 
-  function defaultGroupProperties($branch, $officename) {
-    return array(
+  function defaultGroupProperties($branch, $officename, $properties = array()) {
+    $result = $properties + array(
       'branch' => $branch,
       'office' => $officename,
-      'simplified-branch' => $this->simplifyBranchName($branch),
-      'simplified-office' => $this->simplifyOfficeName($officename),
+      'office-plural' => $this->plural($officename),
     );
+
+    $result += array(
+      'simplified-branch' => $this->simplifyBranchName($result['branch']),
+      'simplified-office' => $this->simplifyOfficeName($result['office']),
+    );
+
+    $result += array(
+      'simplified-office-plural' => $this->simplifyOfficeName($this->plural($result['simplified-office'])),
+    );
+
+    return $result;
+  }
+
+  // TODO:  is there somewhere we could store the plural for office-plural?
+  function plural($noun) {
+    // For the offices we currently have, it works well to just add
+    // an "s" if there isn't already an "s" at the end of the name.
+    if (substr($noun, -1) == "s") {
+      return $noun;
+    }
+    else {
+      return $noun . "s";
+    }
   }
 
   /**
@@ -79,7 +107,7 @@ class StandardGroupPolicy implements GroupPolicy {
    * not provided, then "Branch Office" is used instead.
    */
   function getGroupName($branch, $officename, $properties = array()) {
-    return $this->getProperty('group-name', $this->defaultGroupProperties($branch, $officename));
+    return $this->getProperty('group-name', $this->defaultGroupProperties($branch, $officename, $properties));
   }
 
   /**
@@ -87,6 +115,24 @@ class StandardGroupPolicy implements GroupPolicy {
    */
   function getDomain() {
     return $this->defaults['domain'];
+  }
+
+  /**
+   * @returns array 'name' => array of properties
+   */
+  function getAggregatedGroups($branch, $officename, $properties = array()) {
+    $result = array();
+    $allName = $this->getProperty('aggragate-all-name', $this->defaultGroupProperties($branch, $officename, $properties));
+    $allEmail = $this->getProperty('aggrageat-all-email', $this->defaultGroupProperties($branch, $officename, $properties));
+    $allKey = $this->getProperty('aggrageat-all-key', $this->defaultGroupProperties($branch, $officename, $properties));
+    $result[$allKey] = array('group-id' => $allEmail, 'group-name' => $allName, 'group-email' => $allEmail);
+
+    $officersName = $this->getProperty('aggragate-branch-officers-name', $this->defaultGroupProperties($branch, $officename, $properties));
+    $officersEmail = $this->getProperty('aggragate-branch-officers-email', $this->defaultGroupProperties($branch, $officename, $properties));
+    $officersKey = $this->getProperty('aggragate-branch-officers-key', $this->defaultGroupProperties($branch, $officename, $properties));
+    $result[$officersKey] = array('group-id' => $officersEmail, 'group-name' => $officersName, 'group-email' => $officersEmail);
+
+    return $result;
   }
 
   /**

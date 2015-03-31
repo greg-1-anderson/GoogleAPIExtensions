@@ -14,11 +14,34 @@ class GroupsTestCase extends ProphecyTestCase {
   public function setUp() {
     parent::setup();
 
-    $groupData = file_get_contents(dirname(__FILE__) . "/testData/westkingdom.org.yaml");
-    $parsed = Yaml::parse($groupData);
+    $groupData = "
+west:
+  lists:
+    webminister:
+      members:
+        - wkwxxx@sca.org
+        - syexxx@sca.org
+        - byzxxx@sca.org
+        - bulxxx@sca.org
+        - lilxxx@sca.org
+        - jscxxx@sca.org
+        - x.axxx@sca.org
+        - nutxxx@sca.org
+        - lucxxx@sca.org
+        - robxxx@sca.org
+      properties:
+        group-name: West Kingdom Web Minister
+_aggregated:
+  lists:
+    all-webministers:
+      members:
+        - west-webminister@testdomain.org
+    west-officers:
+      members:
+        - west-webminister@testdomain.org";
+    $this->initialState = Yaml::parse(trim($groupData));
     // Throw away the first top-level key, use all of the data under it. Ignore any other top-level keys.
     $this->policy = new StandardGroupPolicy('testdomain.org');
-    $this->initialState = $this->policy->normalize(array_pop($parsed));
   }
 
   public function testNormalize() {
@@ -75,8 +98,8 @@ north:
     $this->assertYamlEquals(trim($expected), $normalized);
   }
 
-  public function assertYamlEquals($data, $expected) {
-    $this->assertEquals($this->arrayToYaml($data), $this->arrayToYaml($expected));
+  public function assertYamlEquals($expected, $data) {
+    $this->assertEquals($this->arrayToYaml($expected), $this->arrayToYaml($data));
   }
 
   public function arrayToYaml($data) {
@@ -93,13 +116,10 @@ north:
 
   public function testLoadingOfTestData() {
     // Do a nominal test to check to see that our test data loaded
-    $this->assertEquals(implode(',', array_keys($this->initialState)), 'west,mists');
+    $this->assertEquals('west,_aggregated', implode(',', array_keys($this->initialState)));
   }
 
   public function testInsertMember() {
-    // Do a nominal test to check to see that our test data loaded
-    $this->assertEquals(implode(',', array_keys($this->initialState)), 'west,mists');
-
     // Create a new state object by copying our existing state and adding
     // a member to the "west-webminister" group.
     $newState = $this->initialState;
@@ -126,9 +146,6 @@ north:
   }
 
   public function testRemoveMember() {
-    // Do a nominal test to check to see that our test data loaded
-    $this->assertEquals(implode(',', array_keys($this->initialState)), 'west,mists');
-
     // Create a new state object by copying our existing state and adding
     // a member to the "west-webminister" group.
     $newState = $this->initialState;
@@ -150,4 +167,46 @@ north:
     $groupManager->update($newState);
     $groupManager->execute();
   }
+
+  public function testInsertOffice() {
+    // Create a new state object by copying our existing state and adding
+    // a member to the "west-webminister" group.
+    $newState = $this->initialState;
+    $newState['west']['lists']['seneschal']['members'][] = 'anne@kingdom.org';
+    $newState['west']['lists']['seneschal']['properties']['group-name'] = 'West Seneschal';
+
+    // Create a new test controller prophecy, and reveal it to the
+    // Groups object we are going to test.
+    $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
+    $groupManager = new GroupsManager($testController->reveal(), $this->policy, $this->initialState);
+
+    // Prophesize that the new user will be added to the west webministers group.
+    $testController->begin()->shouldBeCalled();
+
+    $testController->insertOffice()->shouldBeCalled()->withArguments(array("west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->configureOffice()->shouldBeCalled()->withArguments(array("west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->verifyOffice()->shouldBeCalled()->withArguments(array("west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array("west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array("west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
+
+    $testController->insertOffice()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
+    $testController->configureOffice()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
+    $testController->verifyOffice()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
+    $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
+    $testController->insertMember()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", "all-seneschals@testdomain.org", "west-seneschal@testdomain.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", "all-seneschals@testdomain.org", "west-seneschal@testdomain.org"));
+
+    $testController->insertMember()->shouldBeCalled()->withArguments(array("_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array("_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
+
+    $testController->complete()->shouldBeCalled();
+
+    // Update the group.  The prophecies are checked against actual
+    // behavior during teardown.
+    $groupManager->update($newState);
+    $groupManager->execute();
+  }
+
+
 }

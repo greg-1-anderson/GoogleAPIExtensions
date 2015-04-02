@@ -112,7 +112,10 @@ class GroupsManager {
   }
 
   function execute() {
-    $this->journal->execute();
+    return $this->journal->execute();
+  }
+
+  function getExistingState() {
     return $this->journal->getExistingState();
   }
 

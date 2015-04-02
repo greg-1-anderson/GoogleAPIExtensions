@@ -60,7 +60,7 @@ class GoogleAppsGroupsController implements GroupsController {
         $members[] = $memberInfo->getEmail();
       }
       $properties['group-name'] = $groupInfo->getName();
-      $properties['id'] = $groupInfo->getId();
+      $properties['group-id'] = $groupInfo->getId();
       $results[$branch]['lists'][$office] = array(
         'members' => $members,
         'properties' => $properties,
@@ -99,7 +99,15 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->batch->add($req);
   }
 
+  // TODO: it is inefficient to verify group memberships one user at a time.
   function verifyMember($branch, $officename, $group_id, $memberEmailAddress) {
+    try {
+      $data = $this->directoryService->members->listMembers($group_id);
+    }
+    catch (Exception $e) {
+      return FALSE;
+    }
+    // TODO: check $memberEmailAddress against returned data
     return TRUE;
   }
 
@@ -149,10 +157,33 @@ class GoogleAppsGroupsController implements GroupsController {
   }
 
   function verifyOffice($branch, $officename, $properties) {
+    $groupId = $properties['group-id'];
+    try {
+      $data = $this->directoryService->groups->get($groupId);
+    }
+    catch (Exception $e) {
+      return FALSE;
+    }
     return TRUE;
   }
 
   function verifyOfficeConfiguration($branch, $officename, $properties) {
+    $groupId = $properties['group-id'];
+    $opt_params = array(
+      'alt' => "json"
+    );
+    try {
+      $settingData = $this->groupSettingsService->groups->get($groupId, $opt_params);
+    }
+    catch (Exception $e) {
+      return FALSE;
+    }
+
+    if (($settingData->getWhoCanJoin() != "INVITED_CAN_JOIN") ||
+        ($settingData->getWhoCanPostMessage() != "ANYONE_CAN_POST")) {
+      return FALSE;
+    }
+
     return TRUE;
   }
 
@@ -171,17 +202,25 @@ class GoogleAppsGroupsController implements GroupsController {
     $this->batch->add($req);
   }
 
+  // TODO: it is inefficient to verify alternate addresses one at a time.
   function verifyGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
+    try {
+      $aliasData = $this->directoryService->groups_aliases->get($groupId);
+    }
+    catch (Exception $e) {
+      return FALSE;
+    }
+    // TODO: check $aliasData against $alternateAddress
     return TRUE;
   }
 
   function begin() {
-    $client->setUseBatch(TRUE);
+    $this->client->setUseBatch(TRUE);
   }
 
   function complete($execute = NULL) {
     $result = array();
-    $client->setUseBatch(FALSE);
+    $this->client->setUseBatch(FALSE);
     if (!isset($execute)) {
       $execute = $this->autoExecute;
     }

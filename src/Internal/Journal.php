@@ -36,6 +36,7 @@ class Journal {
   function executeQueue($queueName) {
     if (array_key_exists($queueName, $this->operationQueues)) {
       foreach ($this->operationQueues[$queueName] as $op) {
+        // TODO: record the time we attempted to run $op
         $op->run();
       }
     }
@@ -43,7 +44,9 @@ class Journal {
 
   // TODO: This should take the array of operations that was returned
   // from 'executeQueue', and only try to verify those.  Remove only
-  // those items from the queue that verified.
+  // those items from the queue that verified.  The problem with this
+  // idea is that we run in batch mode; we'd have to reassociate the
+  // failure from the batch execute with the operation it belonged to.
   function verifyQueue($queueName) {
     $unfinished = array();
     if (array_key_exists($queueName, $this->operationQueues)) {
@@ -59,6 +62,7 @@ class Journal {
           }
         }
         else {
+          // TODO: flag $op as verified
           $unfinished[] = $op;
         }
       }
@@ -68,16 +72,20 @@ class Journal {
   }
 
   function execute() {
+    $executionResults = array();
     // Run all of the operations in all of the queues
     foreach ($this->queues as $queueName) {
       $this->ctrl->begin();
       $this->executeQueue($queueName);
-      $this->ctrl->complete();
+      // TODO: can we associate any failures in $batchResult with the op that it belongs to?
+      $batchResult = $this->ctrl->complete(TRUE);
+      $executionResults[$queueName] = $batchResult;
     }
     // Verify each operation
     foreach ($this->queues as $queueName) {
       $this->verifyQueue($queueName);
     }
+    return $executionResults;
   }
 
   function begin() {

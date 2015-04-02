@@ -40,7 +40,6 @@ _aggregated:
       members:
         - west-webminister@testdomain.org";
     $this->initialState = Yaml::parse(trim($groupData));
-    // Throw away the first top-level key, use all of the data under it. Ignore any other top-level keys.
     $this->policy = new StandardGroupPolicy('testdomain.org');
   }
 
@@ -137,7 +136,7 @@ north:
     $testController->insertGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
     $testController->verifyMember()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
     $testController->verifyGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
-    $testController->complete()->shouldBeCalled();
+    $testController->complete()->shouldBeCalled()->withArguments(array(TRUE));
 
     // Update the group.  The prophecies are checked against actual
     // behavior during teardown.
@@ -160,7 +159,7 @@ north:
     // and then removed again
     $testController->begin()->shouldBeCalled();
     $testController->removeMember()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "robxxx@sca.org"));
-    $testController->complete()->shouldBeCalled();
+    $testController->complete()->shouldBeCalled()->withArguments(array(TRUE));
 
     // Update the group.  The prophecies are checked against actual
     // behavior during teardown.
@@ -200,7 +199,7 @@ north:
     $testController->insertMember()->shouldBeCalled()->withArguments(array("_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
     $testController->verifyMember()->shouldBeCalled()->withArguments(array("_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
 
-    $testController->complete()->shouldBeCalled();
+    $testController->complete()->shouldBeCalled()->withArguments(array(TRUE));
 
     // Update the group.  The prophecies are checked against actual
     // behavior during teardown.

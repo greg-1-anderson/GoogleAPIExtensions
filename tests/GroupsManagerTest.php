@@ -3,10 +3,11 @@
 use Westkingdom\GoogleAPIExtensions\GroupsManager;
 use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
 use Prophecy\PhpUnit\ProphecyTestCase;
+use Prophecy\Argument\Token\AnyValueToken;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Dumper;
 
-class GroupsTestCase extends ProphecyTestCase {
+class GroupsManagerTestCase extends ProphecyTestCase {
 
   protected $initialState = array();
   protected $policy;
@@ -132,10 +133,10 @@ north:
 
     // Prophesize that the new user will be added to the west webministers group.
     $testController->begin()->shouldBeCalled();
-    $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
-    $testController->insertGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
-    $testController->verifyMember()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
-    $testController->verifyGroupAlternateAddress()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
+    $testController->insertMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
+    $testController->insertGroupAlternateAddress()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
+    $testController->verifyGroupAlternateAddress()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
     $testController->complete()->shouldBeCalled()->withArguments(array(TRUE));
 
     // Update the group.  The prophecies are checked against actual
@@ -158,7 +159,7 @@ north:
     // Prophesize that a user will be removed from the west webministers group,
     // and then removed again
     $testController->begin()->shouldBeCalled();
-    $testController->removeMember()->shouldBeCalled()->withArguments(array("west", "webminister", "west-webminister@testdomain.org", "robxxx@sca.org"));
+    $testController->removeMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "robxxx@sca.org"));
     $testController->complete()->shouldBeCalled()->withArguments(array(TRUE));
 
     // Update the group.  The prophecies are checked against actual
@@ -182,22 +183,22 @@ north:
     // Prophesize that the new user will be added to the west webministers group.
     $testController->begin()->shouldBeCalled();
 
-    $testController->insertOffice()->shouldBeCalled()->withArguments(array("west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
-    $testController->configureOffice()->shouldBeCalled()->withArguments(array("west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
-    $testController->verifyOffice()->shouldBeCalled()->withArguments(array("west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
-    $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array("west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
-    $testController->insertMember()->shouldBeCalled()->withArguments(array("west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
-    $testController->verifyMember()->shouldBeCalled()->withArguments(array("west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
+    $testController->insertOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->configureOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->verifyOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->insertMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
 
-    $testController->insertOffice()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
-    $testController->configureOffice()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
-    $testController->verifyOffice()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
-    $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
-    $testController->insertMember()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", "all-seneschals@testdomain.org", "west-seneschal@testdomain.org"));
-    $testController->verifyMember()->shouldBeCalled()->withArguments(array("_aggregated", "all-seneschals", "all-seneschals@testdomain.org", "west-seneschal@testdomain.org"));
+    $testController->insertOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
+    $testController->configureOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
+    $testController->verifyOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
+    $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
+    $testController->insertMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", "all-seneschals@testdomain.org", "west-seneschal@testdomain.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", "all-seneschals@testdomain.org", "west-seneschal@testdomain.org"));
 
-    $testController->insertMember()->shouldBeCalled()->withArguments(array("_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
-    $testController->verifyMember()->shouldBeCalled()->withArguments(array("_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
+    $testController->insertMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
 
     $testController->complete()->shouldBeCalled()->withArguments(array(TRUE));
 

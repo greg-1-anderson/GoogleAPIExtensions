@@ -3,6 +3,7 @@
 use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
 use Westkingdom\GoogleAPIExtensions\GroupPolicy;
 use Westkingdom\GoogleAPIExtensions\BatchWrapper;
+use Westkingdom\GoogleAPIExtensions\Internal\Operation;
 
 use Symfony\Component\Yaml\Dumper;
 
@@ -40,15 +41,17 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
       'group-name' => 'North Vice-President',
     );
 
-    $controller->insertOffice('north', 'president', $presidentProperties);
-    $controller->configureOffice('north', 'president', $presidentProperties);
-    $controller->insertMember('north', 'president', $presidentProperties['group-id'], 'franklin@testdomain.org');
-    $controller->insertGroupAlternateAddress('north', 'president', $presidentProperties['group-id'], 'elpresidente@testdomain.org');
-    $controller->removeMember('north', 'president', $presidentProperties['group-id'], 'franklin@testdomain.org');
-    $controller->removeGroupAlternateAddress('north', 'president', $presidentProperties['group-id'], 'elpresidente@testdomain.org');
-    $controller->insertMember('north', 'vice-president', $vicePresidentProperties['group-id'], 'garner@testdomain.org');
-    $controller->removeMember('north', 'vice-president', $vicePresidentProperties['group-id'], 'garner@testdomain.org');
-    $controller->deleteOffice('north', 'president', $presidentProperties);
+    $op = new Operation('placeholderOperation', array());
+
+    $controller->insertOffice($op, 'north', 'president', $presidentProperties);
+    $controller->configureOffice($op, 'north', 'president', $presidentProperties);
+    $controller->insertMember($op, 'north', 'president', $presidentProperties['group-id'], 'franklin@testdomain.org');
+    $controller->insertGroupAlternateAddress($op, 'north', 'president', $presidentProperties['group-id'], 'elpresidente@testdomain.org');
+    $controller->removeMember($op, 'north', 'president', $presidentProperties['group-id'], 'franklin@testdomain.org');
+    $controller->removeGroupAlternateAddress($op, 'north', 'president', $presidentProperties['group-id'], 'elpresidente@testdomain.org');
+    $controller->insertMember($op, 'north', 'vice-president', $vicePresidentProperties['group-id'], 'garner@testdomain.org');
+    $controller->removeMember($op, 'north', 'vice-president', $vicePresidentProperties['group-id'], 'garner@testdomain.org');
+    $controller->deleteOffice($op, 'north', 'president', $presidentProperties);
 
     // The expected list of requests corresponding to the calls above:
     $expected = <<< EOT

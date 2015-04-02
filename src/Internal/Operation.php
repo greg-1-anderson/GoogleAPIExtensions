@@ -7,12 +7,44 @@ class Operation {
   protected $runParameters;
   protected $verifyFunction;
   protected $verifyParameters;
+  protected $operationId;
+  protected $operationSequence;
 
   function __construct($runFn, $runParams, $verifyFn = NULL, $verifyParams = NULL) {
     $this->runFunction = $runFn;
     $this->runParameters = $runParams;
     $this->verifyFunction = $verifyFn;
     $this->verifyParameters = $verifyParams;
+
+    array_unshift($this->runParameters, $this);
+    if ($verifyParams) {
+      array_unshift($this->verifyParameters, $this);
+    }
+
+    $this->operationId = mt_rand();
+    $this->operationSequence = 0;
+  }
+
+  /**
+   * Return a seqence number consisting of the operation id
+   * for this operation followed by ":" and a sequence number.
+   * Example: 414530998:1
+   */
+  function nextSequenceNumber() {
+    $this->operationSequence++;
+    return $this->operationId . ":" . $this->operationSequence;
+  }
+
+  /**
+   * Check to see if a batch response id matches this operation.
+   * Batch response ids are made by appending the operation sequence
+   * number to "response-", so we strip off everything up to the
+   * first "-", and everything after the ":", and see if the remainder
+   * matches our operation id.
+   */
+  function compareId($checkId) {
+    $checkId = preg_replace('/.*-|:.*/','', $checkId);
+    return $checkId == $this->operationId;
   }
 
   function getRunFunction() {
@@ -30,6 +62,10 @@ class Operation {
 
   function getRunFunctionParameters() {
     return $this->runParameters;
+  }
+
+  function getVerifyFunctionParameters() {
+    return $this->verifyParameters ?: $this->runParameters;
   }
 
   /**

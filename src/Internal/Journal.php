@@ -101,7 +101,7 @@ class Journal {
     $this->queue($op, Journal::SETUP_QUEUE);
   }
 
-  function insertBranchVerified($branch) {
+  function insertBranchVerified($op, $branch) {
     if (!array_key_exists($branch, $this->existingState)) {
       $this->existingState[$branch] = array();
     }
@@ -115,7 +115,7 @@ class Journal {
     $this->queue($op, Journal::TEARDOWN_QUEUE);
   }
 
-  function deleteBranchVerified($branch) {
+  function deleteBranchVerified($op, $branch) {
     unset($this->existingState[$branch]);
   }
 
@@ -129,7 +129,7 @@ class Journal {
     $this->queue($op);
   }
 
-  function insertMemberVerified($branch, $officename, $group_id, $memberEmailAddress) {
+  function insertMemberVerified($op, $branch, $officename, $group_id, $memberEmailAddress) {
     // TODO: unique only. Should we sort as well?
     $this->existingState[$branch]['lists'][$officename]['members'][] = $memberEmailAddress;
   }
@@ -142,7 +142,7 @@ class Journal {
     $this->queue($op);
   }
 
-  function removeMemberVerified($branch, $officename, $group_id, $memberEmailAddress) {
+  function removeMemberVerified($op, $branch, $officename, $group_id, $memberEmailAddress) {
     // TODO: unique only. Should we sort as well?
     unset($this->existingState[$branch]['lists'][$officename]['members'][$memberEmailAddress]);
   }
@@ -157,7 +157,7 @@ class Journal {
     $this->queue($op);
   }
 
-  function insertGroupAlternateAddressVerified($branch, $officename, $group_id, $alternateAddress) {
+  function insertGroupAlternateAddressVerified($op, $branch, $officename, $group_id, $alternateAddress) {
     // TODO: unique only. Should we sort as well?
     $this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'][] = $alternateAddress;
   }
@@ -170,7 +170,7 @@ class Journal {
     $this->queue($op);
   }
 
-  function removeGroupAlternateAddressVerified($branch, $officename, $group_id, $alternateAddress) {
+  function removeGroupAlternateAddressVerified($op, $branch, $officename, $group_id, $alternateAddress) {
     unset($this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'][$alternateAddress]);
   }
 
@@ -197,7 +197,7 @@ class Journal {
     }
   }
 
-  function configureOfficeVerified($branch, $officename, $properties) {
+  function configureOfficeVerified($op, $branch, $officename, $properties) {
     // TODO: At the moment, all configuration is hardcoded.  When that changes,
     // we will need to update our state here as well.
   }
@@ -210,7 +210,7 @@ class Journal {
     $this->queue($op);
   }
 
-  function deleteOfficeVerified($branch, $officename, $properties) {
+  function deleteOfficeVerified($op, $branch, $officename, $properties) {
     unset($this->existingState[$branch]['lists'][$officename]);
   }
 

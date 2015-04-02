@@ -2,6 +2,8 @@
 
 namespace Westkingdom\GoogleAPIExtensions;
 
+use Westkingdom\GoogleAPIExtensions\Internal\Operation;
+
 /**
  * Use this groups controller with Westkingdom\GoogleAPIExtensions\Groups
  * to update groups and group memberships in Google Apps.
@@ -70,37 +72,37 @@ class GoogleAppsGroupsController implements GroupsController {
     return $results;
   }
 
-  function insertBranch($branch) {
+  function insertBranch(Operation $op, $branch) {
     // no-op; we create groups for offices in a branch, but presently
     // we have no Google object that we create for branches.
   }
 
-  function deleteBranch($branch) {
+  function deleteBranch(Operation $op, $branch) {
     // no-op; @see insertBranch.
   }
 
-  function verifyBranch($branch) {
+  function verifyBranch(Operation $op, $branch) {
     // no-op; @see insertBranch.
     return TRUE;
   }
 
-  function insertMember($branch, $officename, $group_id, $memberEmailAddress) {
+  function insertMember(Operation $op, $branch, $officename, $group_id, $memberEmailAddress) {
     $member = new \Google_Service_Directory_Member(array(
                             'email' => $memberEmailAddress,
                             'role'  => 'MEMBER',
                             'type'  => 'USER'));
 
     $req = $this->directoryService->members->insert($group_id, $member);
-    $this->batch->add($req);
+    $this->batch->add($req, $op->nextSequenceNumber());
   }
 
-  function removeMember($branch, $officename, $group_id, $memberEmailAddress) {
+  function removeMember(Operation $op, $branch, $officename, $group_id, $memberEmailAddress) {
     $req = $this->directoryService->members->delete($group_id, $memberEmailAddress);
-    $this->batch->add($req);
+    $this->batch->add($req, $op->nextSequenceNumber());
   }
 
   // TODO: it is inefficient to verify group memberships one user at a time.
-  function verifyMember($branch, $officename, $group_id, $memberEmailAddress) {
+  function verifyMember(Operation $op, $branch, $officename, $group_id, $memberEmailAddress) {
     try {
       $data = $this->directoryService->members->listMembers($group_id);
     }
@@ -111,7 +113,7 @@ class GoogleAppsGroupsController implements GroupsController {
     return TRUE;
   }
 
-  function insertOffice($branch, $officename, $properties) {
+  function insertOffice(Operation $op, $branch, $officename, $properties) {
     $group_email = $properties['group-email'];
     $group_name = $properties['group-name'];
 
@@ -121,10 +123,10 @@ class GoogleAppsGroupsController implements GroupsController {
     ));
 
     $req = $this->directoryService->groups->insert($newgroup);
-    $this->batch->add($req);
+    $this->batch->add($req, $op->nextSequenceNumber());
   }
 
-  function configureOffice($branch, $officename, $properties) {
+  function configureOffice(Operation $op, $branch, $officename, $properties) {
     $groupId = $properties['group-id'];
     $settingData = new \Google_Service_Groupssettings_Groups();
 
@@ -137,7 +139,7 @@ class GoogleAppsGroupsController implements GroupsController {
     $settingData->setWhoCanPostMessage("ANYONE_CAN_POST");
 
     $req = $this->groupSettingsService->groups->patch($groupId, $settingData);
-    $this->batch->add($req);
+    $this->batch->add($req, $op->nextSequenceNumber());
 
     if (isset($properties['alternate-addresses'])) {
       foreach ($properties['alternate-addresses'] as $alternate_address) {
@@ -145,18 +147,18 @@ class GoogleAppsGroupsController implements GroupsController {
           'alias' => $alternate_address,
         ));
         $req = $this->directoryService->groups_aliases->insert($groupId, $newalias);
-        $this->batch->add($req);
+        $this->batch->add($req, $op->nextSequenceNumber());
       }
     }
   }
 
-  function deleteOffice($branch, $officename, $properties) {
+  function deleteOffice(Operation $op, $branch, $officename, $properties) {
     $groupId = $properties['group-id'];
     $req = $this->directoryService->groups->delete($groupId);
-    $this->batch->add($req);
+    $this->batch->add($req, $op->nextSequenceNumber());
   }
 
-  function verifyOffice($branch, $officename, $properties) {
+  function verifyOffice(Operation $op, $branch, $officename, $properties) {
     $groupId = $properties['group-id'];
     try {
       $data = $this->directoryService->groups->get($groupId);
@@ -167,7 +169,7 @@ class GoogleAppsGroupsController implements GroupsController {
     return TRUE;
   }
 
-  function verifyOfficeConfiguration($branch, $officename, $properties) {
+  function verifyOfficeConfiguration(Operation $op, $branch, $officename, $properties) {
     $groupId = $properties['group-id'];
     $opt_params = array(
       'alt' => "json"
@@ -187,23 +189,23 @@ class GoogleAppsGroupsController implements GroupsController {
     return TRUE;
   }
 
-  function insertGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
+  function insertGroupAlternateAddress(Operation $op, $branch, $officename, $group_id, $alternateAddress) {
     $newAlternateAddress = new \Google_Service_Directory_Alias(array(
       'alias' => $alternateAddress,
       ));
     $req = $this->directoryService->groups_aliases->insert($group_id, $newAlternateAddress);
-    $this->batch->add($req);
+    $this->batch->add($req, $op->nextSequenceNumber());
   }
 
-  function removeGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
+  function removeGroupAlternateAddress(Operation $op, $branch, $officename, $group_id, $alternateAddress) {
     // n.b. inserting an alias also adds a non-editable alias, but deleting
     // an alias does not delete its non-editable counterpart.
     $req = $this->directoryService->groups_aliases->delete($group_id, $alternateAddress);
-    $this->batch->add($req);
+    $this->batch->add($req, $op->nextSequenceNumber());
   }
 
   // TODO: it is inefficient to verify alternate addresses one at a time.
-  function verifyGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
+  function verifyGroupAlternateAddress(Operation $op, $branch, $officename, $group_id, $alternateAddress) {
     try {
       $aliasData = $this->directoryService->groups_aliases->get($groupId);
     }

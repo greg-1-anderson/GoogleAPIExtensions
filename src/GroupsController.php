@@ -2,21 +2,23 @@
 
 namespace Westkingdom\GoogleAPIExtensions;
 
+use Westkingdom\GoogleAPIExtensions\Internal\Operation;
+
 interface GroupsController {
   function begin();
-  function insertBranch($branch);
-  function deleteBranch($branch);
-  function verifyBranch($branch);
-  function insertMember($branch, $officename, $group_id, $memberEmailAddress);
-  function removeMember($branch, $officename, $group_id, $memberEmailAddress);
-  function verifyMember($branch, $officename, $group_id, $memberEmailAddress);
-  function insertGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress);
-  function removeGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress);
-  function verifyGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress);
-  function insertOffice($branch, $officename, $properties);
-  function configureOffice($branch, $officename, $properties);
-  function deleteOffice($branch, $officename, $properties);
-  function verifyOffice($branch, $officename, $properties);
-  function verifyOfficeConfiguration($branch, $officename, $properties);
+  function insertBranch(Operation $op, $branch);
+  function deleteBranch(Operation $op, $branch);
+  function verifyBranch(Operation $op, $branch);
+  function insertMember(Operation $op, $branch, $officename, $group_id, $memberEmailAddress);
+  function removeMember(Operation $op, $branch, $officename, $group_id, $memberEmailAddress);
+  function verifyMember(Operation $op, $branch, $officename, $group_id, $memberEmailAddress);
+  function insertGroupAlternateAddress(Operation $op, $branch, $officename, $group_id, $alternateAddress);
+  function removeGroupAlternateAddress(Operation $op, $branch, $officename, $group_id, $alternateAddress);
+  function verifyGroupAlternateAddress(Operation $op, $branch, $officename, $group_id, $alternateAddress);
+  function insertOffice(Operation $op, $branch, $officename, $properties);
+  function configureOffice(Operation $op, $branch, $officename, $properties);
+  function deleteOffice(Operation $op, $branch, $officename, $properties);
+  function verifyOffice(Operation $op, $branch, $officename, $properties);
+  function verifyOfficeConfiguration(Operation $op, $branch, $officename, $properties);
   function complete();
 }

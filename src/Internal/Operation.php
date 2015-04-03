@@ -70,7 +70,10 @@ class Operation {
         $result['state'][$key] = $this->$key;
       }
     }
-    // TODO: export any relevant parts of the batch errors (if we care)
+    // TODO: prune any irrelevant parts of the batch errors
+    if (!empty($this->batchErrors)) {
+      $result['errors'] = $this->batchErrors;
+    }
     return $result;
   }
 

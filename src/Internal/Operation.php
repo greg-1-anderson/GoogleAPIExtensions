@@ -10,6 +10,7 @@ class Operation {
   protected $operationId;
   protected $operationSequence;
   protected $executed;
+  protected $failedVerification;
   protected $batchErrors;
 
   function __construct($runFn, $runParams, $verifyFn = NULL, $verifyParams = NULL) {
@@ -18,15 +19,59 @@ class Operation {
     $this->verifyFunction = $verifyFn;
     $this->verifyParameters = $verifyParams;
 
-    array_unshift($this->runParameters, $this);
-    if ($verifyParams) {
-      array_unshift($this->verifyParameters, $this);
-    }
-
     $this->operationId = mt_rand();
     $this->operationSequence = 0;
     $this->executed = FALSE;
+    $this->failedVerification = FALSE;
     $this->batchErrors = array();
+  }
+
+  static function import($ctrl, $data) {
+    $runFn = array($ctrl, $data['run-function']);
+    $runParams = $data['fun-params'];
+    $verifyFn = NULL;
+    $verifyParams = NULL;
+    if (array_key_exists('verify-function', $data)) {
+      $verifyFn = array($ctrl, $data['verify-function']);
+      if (array_key_exists('verify-params', $data)) {
+        $verifyParams['verify-params'] = $data['verify-params'];
+      }
+    }
+    $op = new Operation($runFn, $runParams, $verifyFn, $verifyParams);
+    $op->setImportData($data);
+    return $op;
+  }
+
+  protected function setImportData($data) {
+    if (array_key_exists('state', $data)) {
+      $state = $data['state'];
+      unset($state['runFunction']);
+      unset($state['verifyFunction']);
+      foreach ($state as $key => $value) {
+        $this->$key = $value;
+      }
+    }
+    // TODO: import any batch error data that was exported.
+  }
+
+  function export() {
+    $result = array();
+
+    $result['run-function'] = $this->getRunFunctionName();
+    $result['run-params'] = $this->runParameters;
+    if ($this->verifyFunction) {
+      $result['verify-function'] = $this->verifyFunction[1];
+      if ($this->verifyParameters) {
+        $result['verify-params'] = $this->verifyParameters;
+      }
+    }
+    foreach (array('executed', 'failedVerification') as $key) {
+      if (!empty($this->$key)) {
+        $result['state'][$key] = $this->$key;
+      }
+    }
+    // TODO: export any relevant parts of the batch errors (if we care)
+    return $result;
   }
 
   function equals(Operation $other) {
@@ -86,6 +131,8 @@ class Operation {
   }
 
   function needsVerification() {
+    // TODO: if there are batch errors, and the error is "already exists",
+    // then verify the operation.
     return $this->executed;
   }
 
@@ -103,18 +150,22 @@ class Operation {
   }
 
   function getRunFunctionParameters() {
-    return $this->runParameters;
+    $result = $this->runParameters;
+    array_unshift($result, $this);
+    return $result;
   }
 
   function getVerifyFunctionParameters() {
-    return $this->verifyParameters ?: $this->runParameters;
+    $result = $this->verifyParameters ?: $this->runParameters;
+    array_unshift($result, $this);
+    return $result;
   }
 
   /**
    * Do the operation
    */
   function run() {
-    return call_user_func_array($this->runFunction, $this->runParameters);
+    return call_user_func_array($this->runFunction, $this->getRunFunctionParameters());
   }
 
   /**
@@ -126,6 +177,10 @@ class Operation {
     if (!$this->verifyFunction) {
       return TRUE;
     }
-    return call_user_func_array($this->verifyFunction, $this->verifyParameters);
+    $result = call_user_func_array($this->verifyFunction, $this->getVerifyFunctionParameters());
+    if (!$result) {
+      $this->failedVerification = TRUE;
+    }
+    return $result;
   }
 }

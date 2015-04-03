@@ -65,19 +65,23 @@ class GroupsManager {
     $this->journal->begin();
 
     foreach ($memberships as $branch => $officesLists) {
-      $offices = $officesLists['lists'];
-      // Next, update or insert, depending on whether this branch is new.
-      if (array_key_exists($branch, $existingState)) {
-        $this->updateBranch($branch, $offices);
-      }
-      else {
-        $this->insertBranch($branch, $offices);
+      if ($branch[0] != '#') {
+        $offices = $officesLists['lists'];
+        // Next, update or insert, depending on whether this branch is new.
+        if (array_key_exists($branch, $existingState)) {
+          $this->updateBranch($branch, $offices);
+        }
+        else {
+          $this->insertBranch($branch, $offices);
+        }
       }
     }
     // Finally, delete any branch that is no longer with us.
     foreach ($existingState as $branch => $offices) {
-      if (!array_key_exists($branch, $memberships)) {
-        $this->deleteBranch($branch, $offices);
+      if ($branch[0] != '#') {
+        if (!array_key_exists($branch, $memberships)) {
+          $this->deleteBranch($branch, $offices);
+        }
       }
     }
     $this->journal->complete();

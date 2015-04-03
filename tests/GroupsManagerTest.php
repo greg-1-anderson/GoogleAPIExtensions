@@ -20,16 +20,8 @@ west:
   lists:
     webminister:
       members:
-        - wkwxxx@sca.org
-        - syexxx@sca.org
-        - byzxxx@sca.org
-        - bulxxx@sca.org
-        - lilxxx@sca.org
-        - jscxxx@sca.org
-        - x.axxx@sca.org
-        - nutxxx@sca.org
-        - lucxxx@sca.org
-        - robxxx@sca.org
+        - minister@sca.org
+        - deputy@sca.org
       properties:
         group-name: West Kingdom Web Minister
 _aggregated:
@@ -143,6 +135,45 @@ north:
     // behavior during teardown.
     $groupManager->update($newState);
     $groupManager->execute();
+
+    $expectedFinalState = "
+west:
+  lists:
+    webminister:
+      members:
+        - minister@sca.org
+        - deputy@sca.org
+      properties:
+        group-name: 'West Kingdom Web Minister'
+_aggregated:
+  lists:
+    all-webministers:
+      members:
+        - west-webminister@testdomain.org
+    west-officers:
+      members:
+        - west-webminister@testdomain.org
+'#queues':
+  default:
+    -
+      run-function: insertMember
+      run-params:
+        - west
+        - webminister
+        - west-webminister@testdomain.org
+        - new.admin@somewhere.com
+      verify-function: verifyMember
+    -
+      run-function: insertGroupAlternateAddress
+      run-params:
+        - west
+        - webminister
+        - west-webminister@testdomain.org
+        - webminister@westkingdom.org
+      verify-function: verifyGroupAlternateAddress";
+
+    $state = $groupManager->getExistingState();
+    $this->assertEquals(trim($expectedFinalState), $this->arrayToYaml($state));
   }
 
   public function testRemoveMember() {
@@ -159,7 +190,7 @@ north:
     // Prophesize that a user will be removed from the west webministers group,
     // and then removed again
     $testController->begin()->shouldBeCalled();
-    $testController->removeMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "robxxx@sca.org"));
+    $testController->removeMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "deputy@sca.org"));
     $testController->complete()->shouldBeCalled()->withArguments(array(TRUE));
 
     // Update the group.  The prophecies are checked against actual

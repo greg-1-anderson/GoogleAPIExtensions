@@ -23,7 +23,25 @@ class Journal {
   }
 
   function getExistingState() {
-    return $this->existingState;
+    $result = $this->existingState;
+    $queues = $this->exportOperationQueues();
+    if (!empty($queues)) {
+      $result['#queues'] = $queues;
+    }
+    return $result;
+  }
+
+  function exportOperationQueues() {
+    $result = array();
+
+    foreach ($this->queues as $queueName) {
+      if (array_key_exists($queueName, $this->operationQueues)) {
+        foreach ($this->operationQueues[$queueName] as $op) {
+          $result[$queueName][] = $op->export();
+        }
+      }
+    }
+    return $result;
   }
 
   function hasOperation($other, $queueName = Journal::DEFAULT_QUEUE) {
@@ -142,8 +160,7 @@ class Journal {
     $op = new Operation(
       array($this->ctrl, "insertBranch"),
       array($branch),
-      array($this->ctrl, "verifyBranch"),
-      array($branch)
+      array($this->ctrl, "verifyBranch")
     );
     $this->queue($op, Journal::SETUP_QUEUE);
   }
@@ -170,8 +187,7 @@ class Journal {
     $op = new Operation(
       array($this->ctrl, "insertMember"),
       array($branch, $officename, $group_id, $memberEmailAddress),
-      array($this->ctrl, "verifyMember"),
-      array($branch, $officename, $group_id, $memberEmailAddress)
+      array($this->ctrl, "verifyMember")
     );
     $this->queue($op);
   }
@@ -198,8 +214,7 @@ class Journal {
     $op = new Operation(
       array($this->ctrl, "insertGroupAlternateAddress"),
       array($branch, $officename, $group_id, $alternateAddress),
-      array($this->ctrl, "verifyGroupAlternateAddress"),
-      array($branch, $officename, $group_id, $alternateAddress)
+      array($this->ctrl, "verifyGroupAlternateAddress")
     );
     $this->queue($op);
   }
@@ -225,15 +240,13 @@ class Journal {
     $op = new Operation(
       array($this->ctrl, "insertOffice"),
       array($branch, $officename, $properties),
-      array($this->ctrl, "verifyOffice"),
-      array($branch, $officename, $properties)
+      array($this->ctrl, "verifyOffice")
     );
     $this->queue($op, Journal::CREATION_QUEUE);
     $op = new Operation(
       array($this->ctrl, "configureOffice"),
       array($branch, $officename, $properties),
-      array($this->ctrl, "verifyOfficeConfiguration"),
-      array($branch, $officename, $properties)
+      array($this->ctrl, "verifyOfficeConfiguration")
     );
     $this->queue($op);
   }

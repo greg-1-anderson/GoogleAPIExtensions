@@ -9,6 +9,8 @@ class Operation {
   protected $verifyParameters;
   protected $operationId;
   protected $operationSequence;
+  protected $executed;
+  protected $batchErrors;
 
   function __construct($runFn, $runParams, $verifyFn = NULL, $verifyParams = NULL) {
     $this->runFunction = $runFn;
@@ -23,6 +25,28 @@ class Operation {
 
     $this->operationId = mt_rand();
     $this->operationSequence = 0;
+    $this->executed = FALSE;
+    $this->batchErrors = array();
+  }
+
+  function equals(Operation $other) {
+    // Must have the same run function to be the same
+    if ($this->getRunFunctionName() != $other->getRunFunctionName()) {
+      return FALSE;
+    }
+    // Compare the parameters too
+    $thisParameters = $this->getRunFunctionParameters();
+    $otherParameters = $other->getRunFunctionParameters();
+    // First parameter is always the op, so ignore it.
+    array_shift($thisParameters);
+    array_shift($otherParameters);
+    foreach ($thisParameters as $param) {
+      $otherParam = array_shift($otherParameters);
+      if ($param != $otherParam) {
+        return FALSE;
+      }
+    }
+    return TRUE;
   }
 
   /**
@@ -45,6 +69,24 @@ class Operation {
   function compareId($checkId) {
     $checkId = preg_replace('/.*-|:.*/','', $checkId);
     return $checkId == $this->operationId;
+  }
+
+  function recordExecutionResult($batchResult) {
+    // The Google API returns a 'null' record when everything is okay
+    if (empty($batchResult)) {
+      $this->executed = TRUE;
+      // If simulated, don't run the verify function -- just claim the operation worked.
+      if ($batchResult === FALSE) {
+        $this->verifyFunction = NULL;
+      }
+    }
+    else {
+      $this->batchErrors[] = $batchResult;
+    }
+  }
+
+  function needsVerification() {
+    return $this->executed;
   }
 
   function getRunFunction() {

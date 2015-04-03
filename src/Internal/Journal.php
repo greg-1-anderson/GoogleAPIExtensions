@@ -19,15 +19,31 @@ class Journal {
   function __construct($ctrl, $existingState) {
     $this->ctrl = $ctrl;
     $this->existingState = $existingState;
+    $this->operationQueues = array();
   }
 
   function getExistingState() {
     return $this->existingState;
   }
 
+  function hasOperation($other, $queueName = Journal::DEFAULT_QUEUE) {
+    if (array_key_exists($queueName, $this->operationQueues)) {
+      foreach ($this->operationQueues[$queueName] as $op) {
+        if ($op->equals($other)) {
+          return TRUE;
+        }
+      }
+    }
+    return FALSE;
+  }
+
   function queue(Operation $op, $queueName = Journal::DEFAULT_QUEUE) {
     // TODO: validate that $queueName exists in QUEUES
-    $this->operationQueues[$queueName][] = $op;
+    // Don't allow the same operations to pile up; we'll keep the
+    // older one.
+    if (!$this->hasOperation($op, $queueName)) {
+      $this->operationQueues[$queueName][] = $op;
+    }
   }
 
   // TODO: Operations should have a 'ready' test, and we should also
@@ -51,7 +67,10 @@ class Journal {
     $unfinished = array();
     if (array_key_exists($queueName, $this->operationQueues)) {
       foreach ($this->operationQueues[$queueName] as $op) {
-        $verified = $op->verify();
+        $verified = FALSE;
+        if ($op->needsVerification()) {
+          $verified = $op->verify();
+        }
         // If the operation is verified, then run the 'verified'
         // method that matches the name of the run function for this
         // operation (with 'Verified' appended).
@@ -62,13 +81,33 @@ class Journal {
           }
         }
         else {
-          // TODO: flag $op as verified
           $unfinished[] = $op;
         }
       }
     }
     // Remove finished operations from the queue
     $this->operationQueues[$queueName] = $unfinished;
+  }
+
+  function findOpById($key) {
+    foreach ($this->queues as $queueName) {
+      $op = $this->findOpByIdInQueue($key, $queueName);
+      if ($op) {
+        return $op;
+      }
+    }
+    return FALSE;
+  }
+
+  function findOpByIdInQueue($key, $queueName) {
+    if (array_key_exists($queueName, $this->operationQueues)) {
+      foreach ($this->operationQueues[$queueName] as $op) {
+        if ($op->compareId($key)) {
+          return $op;
+        }
+      }
+    }
+    return FALSE;
   }
 
   function execute() {
@@ -79,6 +118,14 @@ class Journal {
       $this->executeQueue($queueName);
       // TODO: can we associate any failures in $batchResult with the op that it belongs to?
       $batchResult = $this->ctrl->complete(TRUE);
+      if (!empty($batchResult)) {
+        foreach ($batchResult as $batchKey => $batchInfo) {
+          $op = $this->findOpByIdInQueue($batchKey, $queueName);
+          if ($op) {
+            $op->recordExecutionResult($batchInfo);
+          }
+        }
+      }
       $executionResults[$queueName] = $batchResult;
     }
     // Verify each operation

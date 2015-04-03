@@ -47,6 +47,13 @@ class BatchWrapper
     if (isset($this->batch)) {
       $result = $this->batch->execute();
     }
+    else {
+      foreach ($requests as $key => $req) {
+        // The Google API uses NULL to indicate "OK"; we will use
+        // FALSE to indicate "simulated".
+        $result[$key] = FALSE;
+      }
+    }
     $this->requests = array();
     return $result;
   }

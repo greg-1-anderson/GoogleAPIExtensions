@@ -28,7 +28,7 @@ class Operation {
 
   static function import($ctrl, $data) {
     $runFn = array($ctrl, $data['run-function']);
-    $runParams = $data['fun-params'];
+    $runParams = $data['run-params'];
     $verifyFn = NULL;
     $verifyParams = NULL;
     if (array_key_exists('verify-function', $data)) {
@@ -101,7 +101,12 @@ class Operation {
     array_shift($otherParameters);
     foreach ($thisParameters as $param) {
       $otherParam = array_shift($otherParameters);
-      if ($param != $otherParam) {
+      if (is_array($param)) {
+        if (count(array_intersect($param, $otherParam)) != count($param)) {
+          return FALSE;
+        }
+      }
+      elseif ($param != $otherParam) {
         return FALSE;
       }
     }

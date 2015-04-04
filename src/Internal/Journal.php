@@ -25,6 +25,7 @@ class Journal {
     if (isset($this->existingState['#queues'])) {
       $queues = $this->existingState['#queues'];
       unset($this->existingState['#queues']);
+      $this->importOperationQueues($queues);
     }
   }
 
@@ -52,6 +53,16 @@ class Journal {
       }
     }
     return $result;
+  }
+
+  function importOperationQueues($queues) {
+    foreach ($queues as $queueName => $operations) {
+      foreach ($operations as $opData) {
+        $op = Operation::import($this->ctrl, $opData);
+        $this->queue($op, $queueName);
+      }
+    }
+    $this->verify();
   }
 
   function hasOperation($other, $queueName = Journal::DEFAULT_QUEUE) {
@@ -156,11 +167,15 @@ class Journal {
       }
       $executionResults[$queueName] = $batchResult;
     }
+    $this->verify();
+    return $executionResults;
+  }
+
+  function verify() {
     // Verify each operation
     foreach ($this->queues as $queueName) {
       $this->verifyQueue($queueName);
     }
-    return $executionResults;
   }
 
   function begin() {

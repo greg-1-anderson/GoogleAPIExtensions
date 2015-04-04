@@ -20,9 +20,19 @@ class Journal {
     $this->ctrl = $ctrl;
     $this->existingState = $existingState;
     $this->operationQueues = array();
+    // TODO: recreate operationQueues from #queues, as appropriate
+    // Need to decide on a strategy; try-and-abandon?
+    if (isset($this->existingState['#queues'])) {
+      $queues = $this->existingState['#queues'];
+      unset($this->existingState['#queues']);
+    }
   }
 
   function getExistingState() {
+    return $this->existingState;
+  }
+
+  function export() {
     $result = $this->existingState;
     $queues = $this->exportOperationQueues();
     if (!empty($queues)) {

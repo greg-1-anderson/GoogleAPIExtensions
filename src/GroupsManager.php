@@ -123,6 +123,10 @@ class GroupsManager {
     return $this->journal->getExistingState();
   }
 
+  function export() {
+    return $this->journal->export();
+  }
+
   function updateBranch($branch, $updateOffices) {
     $existingState = $this->journal->getExistingState();
     $existingOffices = $existingState[$branch]['lists'];

@@ -172,7 +172,7 @@ _aggregated:
         - webminister@westkingdom.org
       verify-function: verifyGroupAlternateAddress";
 
-    $state = $groupManager->getExistingState();
+    $state = $groupManager->export();
     $this->assertEquals(trim($expectedFinalState), $this->arrayToYaml($state));
   }
 

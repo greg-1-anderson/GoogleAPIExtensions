@@ -11,7 +11,7 @@ class Operation {
   protected $operationSequence;
   protected $executed;
   protected $failedVerification;
-  protected $batchErrors;
+  protected $batchResult;
 
   function __construct($runFn, $runParams, $verifyFn = NULL, $verifyParams = NULL) {
     $this->runFunction = $runFn;
@@ -23,7 +23,7 @@ class Operation {
     $this->operationSequence = 0;
     $this->executed = FALSE;
     $this->failedVerification = FALSE;
-    $this->batchErrors = array();
+    $this->batchResult = FALSE;
   }
 
   static function import($ctrl, $data) {
@@ -71,10 +71,21 @@ class Operation {
       }
     }
     // TODO: prune any irrelevant parts of the batch errors
-    if (!empty($this->batchErrors)) {
-      $result['errors'] = $this->batchErrors;
+    if (is_array($this->batchResult) && !empty($this->batchResult)) {
+      $result['error'] = $this->batchResult;
     }
+    // TODO: if batchResult is TRUE, then this op was executed
+    // at least once without an error.  Maybe we should export this
+    // state as well?
     return $result;
+  }
+
+  // Return the reason this call failed, or FALSE if it did not fail.
+  function errorReason() {
+    if (is_array($this->batchResult) && array_key_exists('reason', $this->batchResult)) {
+      $this->batchResult['reason'];
+    }
+    return FALSE;
   }
 
   function equals(Operation $other) {
@@ -123,13 +134,14 @@ class Operation {
     // The Google API returns a 'null' record when everything is okay
     if (empty($batchResult)) {
       $this->executed = TRUE;
+      $this->batchResult = TRUE;
       // If simulated, don't run the verify function -- just claim the operation worked.
       if ($batchResult === FALSE) {
         $this->verifyFunction = NULL;
       }
     }
     else {
-      $this->batchErrors[] = $batchResult;
+      $this->batchResult = $batchResult;
     }
   }
 

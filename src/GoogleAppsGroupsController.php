@@ -103,6 +103,12 @@ class GoogleAppsGroupsController implements GroupsController {
 
   // TODO: it is inefficient to verify group memberships one user at a time.
   function verifyMember(Operation $op, $branch, $officename, $group_id, $memberEmailAddress) {
+    // If we got a "duplicate" error, then we'll count this as verified
+    // without doing an extra call.
+    // TODO:  Should we return FALSE without checking when errorReason() is some other value?
+    if ($op->errorReason() == "duplicate") {
+      return TRUE;
+    }
     try {
       $data = $this->directoryService->members->listMembers($group_id);
     }
@@ -159,6 +165,9 @@ class GoogleAppsGroupsController implements GroupsController {
   }
 
   function verifyOffice(Operation $op, $branch, $officename, $properties) {
+    if ($op->errorReason() == "duplicate") {
+      return TRUE;
+    }
     $groupId = $properties['group-id'];
     try {
       $data = $this->directoryService->groups->get($groupId);
@@ -206,6 +215,9 @@ class GoogleAppsGroupsController implements GroupsController {
 
   // TODO: it is inefficient to verify alternate addresses one at a time.
   function verifyGroupAlternateAddress(Operation $op, $branch, $officename, $group_id, $alternateAddress) {
+    if ($op->errorReason() == "duplicate") {
+      return TRUE;
+    }
     try {
       $aliasData = $this->directoryService->groups_aliases->get($groupId);
     }
@@ -228,6 +240,9 @@ class GoogleAppsGroupsController implements GroupsController {
     }
     if ($execute) {
       $result = $this->execute();
+      if (method_exists($result, "getErrors")) {
+        $result = $result->getErrors();
+      }
     }
     return $result;
   }

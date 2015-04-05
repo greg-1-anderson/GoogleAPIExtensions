@@ -12,7 +12,7 @@ class LegacyGroups {
       if (!empty($group) && ($group[0] != '#')) {
         list($emailAddress, $members) = explode(' ', $group, 2);
         if (!in_array($emailAddress, $blacklist)) {
-          $members = array_diff(explode(',', $members), $blacklist);
+          $members = array_diff(array_map('trim', explode(',', $members)), $blacklist);
           if (!empty($members)) {
             $legacy[$emailAddress] = $members;
           }
@@ -45,7 +45,7 @@ class LegacyGroups {
         foreach ($offices as $officename => $officeData) {
           if (LegacyGroups::legacyGroupMatches($legacyGroup, $officename, $officeData)) {
             foreach ($members as $member) {
-              $member = strtolower($member);
+              $member = trim(strtolower($member));
               if (!in_array($member, $officeData['members'])) {
                 $memberships[$branch]['lists'][$officename]['members'][] = $member;
               }

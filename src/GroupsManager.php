@@ -31,6 +31,10 @@ class GroupsManager {
     return $groupManager;
   }
 
+  function normalize($memberships) {
+    $memberships = $this->policy->normalize($memberships);
+  }
+
   /**
    * Update our group memberships
    *

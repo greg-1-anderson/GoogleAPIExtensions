@@ -44,7 +44,8 @@ class StandardGroupPolicy implements GroupPolicy {
       'group-name' => '${branch} ${office}',
       'group-email' => '$(simplified-branch)-$(simplified-office)@$(domain)',
       'top-level-group' => preg_replace('/\.[a-z]*$/', '', $domain),
-      'top-level-group-email' => '$(office)@$(domain)',
+      'top-level-group-email' => '$(simplified-office)@$(domain)',
+      'subdomain-group-email' => '$(simplified-office)@$(simplified-branch).$(domain)',
       'aggragate-all-name' => 'All ${office-plural}',
       'aggrageat-all-key' => 'all-$(simplified-office-plural)',
       'aggrageat-all-email' => 'all-$(simplified-office-plural)@$(domain)',
@@ -68,6 +69,28 @@ class StandardGroupPolicy implements GroupPolicy {
    */
   function getGroupEmail($branch, $officename) {
     return $this->getProperty('group-email', $this->defaultGroupProperties($branch, $officename));
+  }
+
+  function getGroupDefaultAlternateAddresses($branch, $officename, $properties = array()) {
+    $alternate_addresses = array();
+    $top_level_group = $this->getProperty('top-level-group', $this->defaultGroupProperties($branch, $officename, $properties));
+    if ($branch == $top_level_group) {
+      $alternate_addresses[] = $this->getProperty('top-level-group-email', $this->defaultGroupProperties($branch, $officename, $properties));
+    }
+    else {
+      // TODO: if we had a list of valid subdomains, e.g. sub.domain.org, then
+      // we could also test to see if $branch == sub, then create an
+      // alias 'office@sub.domain.org' for the standard 'sub-office@domain.org'.
+      $branchIsSubdomain = FALSE;
+      if ($branchIsSubdomain) {
+        $alternate_addresses[] = $this->getProperty('subdomain-group-email', $this->defaultGroupProperties($branch, $officename, $properties));
+      }
+      // TODO: if we had information about the heirarchy of branches, then
+      // we could make a subdomain-group-email alternate address
+      // 'branch-office@sub.domain.org', where 'sub' is the nearest parent
+      // branch that has a valid subdomain 'sub.domain.org'.
+    }
+    return $alternate_addresses;
   }
 
   function defaultGroupProperties($branch, $officename, $properties = array()) {
@@ -208,22 +231,16 @@ class StandardGroupPolicy implements GroupPolicy {
   function normalize($state) {
     $result = array();
     foreach ($state as $branch => $listsAndAliases) {
-      $result[$branch] = $this->normalizeListsAndAliases($branch, $listsAndAliases);
+      $result[$branch] = $this->normalizeLists($branch, $listsAndAliases);
     }
     return $result;
   }
 
-  function normalizeListsAndAliases($branch, $listsAndAliases) {
+  function normalizeLists($branch, $listsAndAliases) {
     // First, normalize the offices data
     $offices = array('lists' => array());
     if (array_key_exists('lists', $listsAndAliases)) {
       $offices['lists'] = $this->normalizeGroupsData($branch, $listsAndAliases['lists']);
-    }
-    if (array_key_exists('aliases', $listsAndAliases)) {
-      $default = array(
-        'forward-only' => TRUE,
-      );
-      $offices['lists'] += $this->normalizeGroupsData($branch, $listsAndAliases['aliases'], $default);
     }
     return $offices;
   }
@@ -245,6 +262,10 @@ class StandardGroupPolicy implements GroupPolicy {
       $data['properties'] += array(
         'group-name' => $this->getGroupName($branch, $office, $propertiesForGroupName),
       );
+      $alternate_addresses = $this->getGroupDefaultAlternateAddresses($branch, $office, $data['properties']);
+      if (!empty($alternate_addresses)) {
+        $data['properties']['alternate-addresses'] = $alternate_addresses;
+      }
       $result[$office] = $data;
     }
     return $result;

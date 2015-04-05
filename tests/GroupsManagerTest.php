@@ -45,11 +45,7 @@ north:
     vice-president:
       - walter@testdomain.org
     secretary:
-      - george@testdomain.org
-  aliases:
-    officers:
-      - president@north.testdomain.org
-      - secretary@north.testdomain.org");
+      - george@testdomain.org");
 
     $normalized = $this->policy->normalize($data);
 
@@ -76,16 +72,7 @@ north:
       properties:
         group-email: north-secretary@testdomain.org
         group-id: north-secretary@testdomain.org
-        group-name: 'North Secretary'
-    officers:
-      members:
-        - president@north.testdomain.org
-        - secretary@north.testdomain.org
-      properties:
-        forward-only: true
-        group-email: north-officers@testdomain.org
-        group-id: north-officers@testdomain.org
-        group-name: 'North Officers'";
+        group-name: 'North Secretary'";
 
     $this->assertYamlEquals(trim($expected), $normalized);
   }

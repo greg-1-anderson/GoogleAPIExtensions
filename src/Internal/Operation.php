@@ -96,9 +96,6 @@ class Operation {
     // Compare the parameters too
     $thisParameters = $this->getRunFunctionParameters();
     $otherParameters = $other->getRunFunctionParameters();
-    // First parameter is always the op, so ignore it.
-    array_shift($thisParameters);
-    array_shift($otherParameters);
     foreach ($thisParameters as $param) {
       $otherParam = array_shift($otherParameters);
       if (is_array($param)) {
@@ -151,9 +148,8 @@ class Operation {
   }
 
   function needsVerification() {
-    // TODO: if there are batch errors, and the error is "already exists",
-    // then verify the operation.
-    return $this->executed;
+    // We'd better verify all the time until we understand the different states an op can be in better.
+    return TRUE; // $this->executed;
   }
 
   function getRunFunction() {
@@ -170,13 +166,25 @@ class Operation {
   }
 
   function getRunFunctionParameters() {
+    return $this->runParameters;
+  }
+
+  function getRunFunctionParametersForCall() {
     $result = $this->runParameters;
     array_unshift($result, $this);
     return $result;
   }
 
+  function setRunFunctionParameters($parameters) {
+    $this->runParameters = $parameters;
+  }
+
   function getVerifyFunctionParameters() {
-    $result = $this->verifyParameters ?: $this->runParameters;
+    return $this->verifyParameters ?: $this->runParameters;
+  }
+
+  function getVerifyFunctionParametersForCall() {
+    $result = $this->getVerifyFunctionParameters();
     array_unshift($result, $this);
     return $result;
   }
@@ -185,7 +193,7 @@ class Operation {
    * Do the operation
    */
   function run() {
-    return call_user_func_array($this->runFunction, $this->getRunFunctionParameters());
+    return call_user_func_array($this->runFunction, $this->getRunFunctionParametersForCall());
   }
 
   /**
@@ -197,7 +205,7 @@ class Operation {
     if (!$this->verifyFunction) {
       return TRUE;
     }
-    $result = call_user_func_array($this->verifyFunction, $this->getVerifyFunctionParameters());
+    $result = call_user_func_array($this->verifyFunction, $this->getVerifyFunctionParametersForCall());
     if (!$result) {
       $this->failedVerification = TRUE;
     }

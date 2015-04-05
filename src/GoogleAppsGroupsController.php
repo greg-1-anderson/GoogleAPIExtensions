@@ -171,6 +171,14 @@ class GoogleAppsGroupsController implements GroupsController {
     $groupId = $properties['group-id'];
     try {
       $data = $this->directoryService->groups->get($groupId);
+      // TODO: maybe return FALSE if $properties has a group-email or group-name that is different (changing office info)?
+      // No, we probably want to use a different operation if we are updating rather than creating the office.
+      $newProperties['group-email'] = $data['email'];
+      $newProperties['group-id'] = $data['id'];
+      $newProperties['group-name'] = $data['name'];
+      // Fill in the group id etc. provided to us.
+      $parameters = array($branch, $officename, $newProperties);
+      $op->setRunFunctionParameters($parameters);
     }
     catch (Exception $e) {
       return FALSE;

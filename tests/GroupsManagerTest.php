@@ -143,6 +143,9 @@ north:
 
     $exported = $groupManager->export();
 
+    // Note: we fail verification here because we verify all ops on import,
+    // and we have mocked the group controller, but not its verify function,
+    // so it cannot verify.
     $expected = "
 create:
   -
@@ -154,7 +157,9 @@ create:
         group-id: all-rapiermarshals@westkingdom.org
         group-name: 'All Rapier-marshals'
         group-email: all-rapiermarshals@westkingdom.org
-    verify-function: verifyOffice";
+    verify-function: verifyOffice
+    state:
+      failedVerification: true";
 
     $this->assertEquals(trim($expected), $this->arrayToYaml($exported['#queues']));
   }
@@ -175,8 +180,8 @@ create:
     $testController->begin()->shouldBeCalled();
     $testController->insertMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
     $testController->insertGroupAlternateAddress()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
-//    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
-//    $testController->verifyGroupAlternateAddress()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "new.admin@somewhere.com"));
+    $testController->verifyGroupAlternateAddress()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "webminister@westkingdom.org"));
     $testController->complete()->shouldBeCalled()->withArguments(array(TRUE));
 
     // Update the group.  The prophecies are checked against actual
@@ -184,6 +189,8 @@ create:
     $groupManager->update($newState);
     $groupManager->execute();
 
+    // Note: we fail verification because we have mocked the group
+    // controller, but not its verify function, so it cannot verify.
     $expectedFinalState = "
 west:
   lists:
@@ -211,6 +218,8 @@ _aggregated:
         - west-webminister@testdomain.org
         - new.admin@somewhere.com
       verify-function: verifyMember
+      state:
+        failedVerification: true
     -
       run-function: insertGroupAlternateAddress
       run-params:
@@ -218,7 +227,9 @@ _aggregated:
         - webminister
         - west-webminister@testdomain.org
         - webminister@westkingdom.org
-      verify-function: verifyGroupAlternateAddress";
+      verify-function: verifyGroupAlternateAddress
+      state:
+        failedVerification: true";
 
     $state = $groupManager->export();
     $this->assertEquals(trim($expectedFinalState), $this->arrayToYaml($state));
@@ -264,10 +275,10 @@ _aggregated:
 
     $testController->insertOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
     $testController->configureOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
-//    $testController->verifyOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
-//    $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->verifyOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
+    $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
     $testController->insertMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
-//    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
 
 //    $testController->insertOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
 //    $testController->configureOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
@@ -286,6 +297,4 @@ _aggregated:
     $groupManager->update($newState);
     $groupManager->execute();
   }
-
-
 }

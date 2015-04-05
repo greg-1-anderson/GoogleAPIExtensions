@@ -115,7 +115,7 @@ class Journal {
         if ($verified) {
           $verifiedMethodName = $op->getRunFunctionName() . 'Verified';
           if (method_exists($this, $verifiedMethodName)) {
-            call_user_func_array(array($this, $verifiedMethodName), $op->getRunFunctionParameters());
+            call_user_func_array(array($this, $verifiedMethodName), $op->getRunFunctionParametersForCall());
           }
         }
         else {
@@ -275,9 +275,11 @@ class Journal {
     $this->queue($op);
   }
 
-  function insertOfficeVerified($branch, $officename, $properties) {
-    foreach (array('group-name', 'group-email') as $key) {
-      $this->existingState[$branch]['lists'][$officename]['properties'][$key] = $properties[$key];
+  function insertOfficeVerified($op, $branch, $officename, $properties) {
+    foreach (array('group-name', 'group-email', 'group-id') as $key) {
+      if (array_key_exists($key, $properties)) {
+        $this->existingState[$branch]['lists'][$officename]['properties'][$key] = $properties[$key];
+      }
     }
   }
 

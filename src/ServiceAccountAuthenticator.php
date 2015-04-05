@@ -71,7 +71,6 @@ class ServiceAccountAuthenticator {
         $searchdir .= '/';
       }
       $service_account_path = $searchdir . $serviceAccount;
-      print("look for $service_account_path\n");
       if (file_exists($service_account_path)) {
         $service_account_info = Yaml::parse($service_account_path);
         // Iterate over all of the items in the service account info
@@ -81,7 +80,6 @@ class ServiceAccountAuthenticator {
           if (isset($service_account_info[$filepath_item]) && $service_account_info[$filepath_item][0] != '/') {
             $orig = $service_account_info[$filepath_item];
             $service_account_info[$filepath_item] = dirname($service_account_path) . '/' . basename($service_account_info[$filepath_item]);
-            print("convert $filepath_item to full path: $orig = " . $service_account_info[$filepath_item] . "\n");
           }
         }
       }

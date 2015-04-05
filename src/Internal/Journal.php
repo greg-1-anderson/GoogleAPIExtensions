@@ -9,7 +9,7 @@ class Journal {
   protected $operationQueues;
   protected $existingState = array();
 
-  const SETUP_QUEUE = 'create';
+  const SETUP_QUEUE = 'setup';
   const CREATION_QUEUE = 'create';
   const DEFAULT_QUEUE = 'default';
   const TEARDOWN_QUEUE = 'last';
@@ -44,7 +44,6 @@ class Journal {
 
   function exportOperationQueues() {
     $result = array();
-
     foreach ($this->queues as $queueName) {
       if (array_key_exists($queueName, $this->operationQueues)) {
         foreach ($this->operationQueues[$queueName] as $op) {

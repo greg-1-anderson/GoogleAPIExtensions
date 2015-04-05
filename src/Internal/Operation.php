@@ -102,7 +102,7 @@ class Operation {
     foreach ($thisParameters as $param) {
       $otherParam = array_shift($otherParameters);
       if (is_array($param)) {
-        if (count(array_intersect($param, $otherParam)) != count($param)) {
+        if (count(array_intersect_assoc($param, $otherParam)) != count($param)) {
           return FALSE;
         }
       }

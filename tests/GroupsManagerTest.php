@@ -111,6 +111,54 @@ north:
     $this->assertEquals('west,_aggregated', implode(',', array_keys($this->initialState)));
   }
 
+  public function testImportOperations() {
+    // Test importing of queues.  The two identical items should
+    // be noticed, and the second discarded.
+    $initial = Yaml::parse(trim("
+'#queues':
+  create:
+    -
+      run-function: insertOffice
+      run-params:
+        - _aggregated
+        - all-rapiermarshals
+        -
+          group-id: all-rapiermarshals@westkingdom.org
+          group-name: 'All Rapier-marshals'
+          group-email: all-rapiermarshals@westkingdom.org
+      verify-function: verifyOffice
+    -
+      run-function: insertOffice
+      run-params:
+        - _aggregated
+        - all-rapiermarshals
+        -
+          group-id: all-rapiermarshals@westkingdom.org
+          group-name: 'All Rapier-marshals'
+          group-email: all-rapiermarshals@westkingdom.org
+      verify-function: verifyOffice"));
+
+    $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
+    $groupManager = new GroupsManager($testController->reveal(), $this->policy, $initial);
+
+    $exported = $groupManager->export();
+
+    $expected = "
+create:
+  -
+    run-function: insertOffice
+    run-params:
+      - _aggregated
+      - all-rapiermarshals
+      -
+        group-id: all-rapiermarshals@westkingdom.org
+        group-name: 'All Rapier-marshals'
+        group-email: all-rapiermarshals@westkingdom.org
+    verify-function: verifyOffice";
+
+    $this->assertEquals(trim($expected), $this->arrayToYaml($exported['#queues']));
+  }
+
   public function testInsertMember() {
     // Create a new state object by copying our existing state and adding
     // a member to the "west-webminister" group.

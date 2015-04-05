@@ -233,7 +233,7 @@ class GoogleAppsGroupsController implements GroupsController {
       return TRUE;
     }
     try {
-      $aliasData = $this->directoryService->groups_aliases->get($groupId);
+      $aliasData = $this->directoryService->groups_aliases->listGroupsAliases($group_id);
     }
     catch (Exception $e) {
       return FALSE;

@@ -63,6 +63,7 @@ class GoogleAppsGroupsControllerTestCase extends PHPUnit_Framework_TestCase {
 -
   requestMethod: PATCH
   url: /groups/v1/groups/north-president%40testdomain.org
+  isArchived: true
   whoCanJoin: INVITED_CAN_JOIN
   whoCanPostMessage: ANYONE_CAN_POST
 -

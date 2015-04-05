@@ -144,6 +144,12 @@ class GoogleAppsGroupsController implements GroupsController {
     // ANYONE_CAN_POST, etc.
     $settingData->setWhoCanPostMessage("ANYONE_CAN_POST");
 
+    // By default, we will archive emails in all groups except for the
+    // aggregated groups, because it is assumed that these forward to
+    // groups that are archived.
+    $defaultIsArchived = ($branch != '_aggregated');
+    $settingData->setIsArchived(array_key_exists('archived', $properties) ? $properties['archived'] : $defaultIsArchived);
+
     $req = $this->groupSettingsService->groups->patch($groupId, $settingData);
     $this->batch->add($req, $op->nextSequenceNumber());
 

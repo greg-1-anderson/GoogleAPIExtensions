@@ -33,7 +33,7 @@ _aggregated:
       members:
         - west-webminister@testdomain.org";
     $this->initialState = Yaml::parse(trim($groupData));
-    $this->policy = new StandardGroupPolicy('testdomain.org');
+    $this->policy = new StandardGroupPolicy('testdomain.org', array('top-level-group' => 'north'));
   }
 
   public function testNormalize() {
@@ -43,7 +43,11 @@ north:
     president:
       - bill@testdomain.org
     vice-president:
-      - walter@testdomain.org
+      members:
+        - walter@testdomain.org
+      properties:
+        alternate-addresses:
+          - vice@testdomain.org
     secretary:
       - george@testdomain.org");
 
@@ -59,10 +63,15 @@ north:
         group-email: north-president@testdomain.org
         group-id: north-president@testdomain.org
         group-name: 'North President'
+        alternate-addresses:
+          - president@testdomain.org
     vice-president:
       members:
         - walter@testdomain.org
       properties:
+        alternate-addresses:
+          - vice@testdomain.org
+          - vicepresident@testdomain.org
         group-email: north-vicepresident@testdomain.org
         group-id: north-vicepresident@testdomain.org
         group-name: 'North Vice-president'
@@ -72,7 +81,9 @@ north:
       properties:
         group-email: north-secretary@testdomain.org
         group-id: north-secretary@testdomain.org
-        group-name: 'North Secretary'";
+        group-name: 'North Secretary'
+        alternate-addresses:
+          - secretary@testdomain.org";
 
     $this->assertYamlEquals(trim($expected), $normalized);
   }
@@ -183,8 +194,8 @@ west:
   lists:
     webminister:
       members:
-        - minister@sca.org
         - deputy@sca.org
+        - minister@sca.org
       properties:
         group-name: 'West Kingdom Web Minister'
 _aggregated:

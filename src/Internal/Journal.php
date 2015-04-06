@@ -35,9 +35,28 @@ class Journal {
 
   function export() {
     $result = $this->existingState;
+    $result = $this->alphebetizeLists($result);
     $queues = $this->exportOperationQueues();
     if (!empty($queues)) {
       $result['#queues'] = $queues;
+    }
+    return $result;
+  }
+
+  protected function alphebetizeLists($lists) {
+    $result = $lists;
+    // Alphabetize all of our lists by key
+    foreach ($result as $key => $data) {
+      if ($key[0] != '#') {
+        if (array_key_exists('lists', $data)) {
+          ksort($result[$key]['lists']);
+          foreach ($result[$key]['lists'] as $officename => $officedata) {
+            if (array_key_exists('members', $officedata)) {
+              sort($result[$key]['lists'][$officename]['members']);
+            }
+          }
+        }
+      }
     }
     return $result;
   }

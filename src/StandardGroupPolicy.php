@@ -264,7 +264,11 @@ class StandardGroupPolicy implements GroupPolicy {
       );
       $alternate_addresses = $this->getGroupDefaultAlternateAddresses($branch, $office, $data['properties']);
       if (!empty($alternate_addresses)) {
-        $data['properties']['alternate-addresses'] = $alternate_addresses;
+        if (!isset($data['properties']['alternate-addresses'])) {
+          $data['properties']['alternate-addresses'] = array();
+        }
+        $data['properties']['alternate-addresses'] = array_merge((array)$data['properties']['alternate-addresses'], $alternate_addresses);
+        sort($data['properties']['alternate-addresses']);
       }
       $result[$office] = $data;
     }

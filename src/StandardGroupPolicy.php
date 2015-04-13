@@ -119,11 +119,20 @@ class StandardGroupPolicy implements GroupPolicy {
   }
 
   function isSubdomain($branch, $properties) {
-    $subdomains = explode(',', $this->getProperty('subdomains', $properties));
-    if (in_array($branch, $subdomains)) {
+    $subdomains = $this->getProperty('subdomains', $properties);
+    if (empty($subdomains)) {
+      return FALSE;
+    }
+    if ($subdomains == 'all') {
       return TRUE;
     }
-    return FALSE;
+    $negate = ($subdomains[0] == '!');
+    if ($negate) {
+      $subdomains = substr($subdomains, 1);
+    }
+    $subdomains = explode(',', $subdomains);
+    $result = in_array($branch, $subdomains);
+    return $result ^ $negate;
   }
 
   // TODO:  is there somewhere we could store the plural for office-plural?

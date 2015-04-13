@@ -112,7 +112,7 @@ class GoogleAppsGroupsController implements GroupsController {
     try {
       $data = $this->directoryService->members->listMembers($group_id);
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       return FALSE;
     }
     // TODO: check $memberEmailAddress against returned data
@@ -186,7 +186,7 @@ class GoogleAppsGroupsController implements GroupsController {
       $parameters = array($branch, $officename, $newProperties);
       $op->setRunFunctionParameters($parameters);
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       return FALSE;
     }
     return TRUE;
@@ -200,7 +200,7 @@ class GoogleAppsGroupsController implements GroupsController {
     try {
       $settingData = $this->groupSettingsService->groups->get($groupId, $opt_params);
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       return FALSE;
     }
 
@@ -235,7 +235,7 @@ class GoogleAppsGroupsController implements GroupsController {
     try {
       $aliasData = $this->directoryService->groups_aliases->listGroupsAliases($group_id);
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       return FALSE;
     }
     // TODO: check $aliasData against $alternateAddress

@@ -9,10 +9,17 @@ class LegacyGroups {
     foreach (explode("\n", $dreamhostGroups) as $group) {
       // Replace all runs of spaces with a single space
       $group = trim(preg_replace('/  */', ' ', $group));
-      if (!empty($group) && ($group[0] != '#')) {
+      if (!empty($group) && ($group[0] == '!')) {
+        $excludedAddress = trim(substr($group, 1));
+        if (!empty($excludedAddress)) {
+          $blacklist[] = $excludedAddress;
+        }
+      }
+      elseif (!empty($group) && ($group[0] != '#')) {
         list($emailAddress, $members) = explode(' ', $group, 2);
         if (!in_array($emailAddress, $blacklist)) {
-          $members = array_diff(array_map('trim', explode(',', $members)), $blacklist);
+          $members = array_unique(array_diff(array_map('trim', explode(',', $members)), $blacklist));
+          sort($members);
           if (!empty($members)) {
             $legacy[$emailAddress] = $members;
           }

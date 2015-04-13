@@ -41,6 +41,7 @@ class StandardGroupPolicy implements GroupPolicy {
   function __construct($domain, $defaults = array()) {
     $this->defaults = $defaults + array(
       'domain' => $domain,
+      'subdomains' => '',
       'group-name' => '${branch} ${office}',
       'group-email' => '$(simplified-branch)-$(simplified-office)@$(domain)',
       'top-level-group' => preg_replace('/\.[a-z]*$/', '', $domain),
@@ -72,18 +73,19 @@ class StandardGroupPolicy implements GroupPolicy {
   }
 
   function getGroupDefaultAlternateAddresses($branch, $officename, $properties = array()) {
+    $groupProperties = $this->defaultGroupProperties($branch, $officename, $properties);
     $alternate_addresses = array();
-    $top_level_group = $this->getProperty('top-level-group', $this->defaultGroupProperties($branch, $officename, $properties));
+    $top_level_group = $this->getProperty('top-level-group', $groupProperties);
     if ($branch == $top_level_group) {
-      $alternate_addresses[] = $this->getProperty('top-level-group-email', $this->defaultGroupProperties($branch, $officename, $properties));
+      $alternate_addresses[] = $this->getProperty('top-level-group-email', $groupProperties);
     }
     else {
       // TODO: if we had a list of valid subdomains, e.g. sub.domain.org, then
       // we could also test to see if $branch == sub, then create an
       // alias 'office@sub.domain.org' for the standard 'sub-office@domain.org'.
-      $branchIsSubdomain = FALSE;
+      $branchIsSubdomain = $this->getProperty('is-subdomain', $groupProperties);
       if ($branchIsSubdomain) {
-        $alternate_addresses[] = $this->getProperty('subdomain-group-email', $this->defaultGroupProperties($branch, $officename, $properties));
+        $alternate_addresses[] = $this->getProperty('subdomain-group-email', $groupProperties);
       }
       // TODO: if we had information about the heirarchy of branches, then
       // we could make a subdomain-group-email alternate address
@@ -109,7 +111,19 @@ class StandardGroupPolicy implements GroupPolicy {
       'simplified-office-plural' => $this->simplifyOfficeName($this->plural($result['simplified-office'])),
     );
 
+    if ($this->isSubdomain($branch, $result)) {
+      $result['is-subdomain'] = TRUE;
+    }
+
     return $result;
+  }
+
+  function isSubdomain($branch, $properties) {
+    $subdomains = explode(',', $this->getProperty('subdomains', $properties));
+    if (in_array($branch, $subdomains)) {
+      return TRUE;
+    }
+    return FALSE;
   }
 
   // TODO:  is there somewhere we could store the plural for office-plural?

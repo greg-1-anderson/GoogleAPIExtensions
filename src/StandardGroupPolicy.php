@@ -60,16 +60,20 @@ class StandardGroupPolicy implements GroupPolicy {
    * The standard policy for the group id is to
    * use the primary group email address as its id.
    */
-  function getGroupId($branch, $officename) {
-    return $this->getGroupEmail($branch, $officename);
+  function getGroupId($branch, $officename, $properties = array()) {
+    $id = $this->getProperty('group-id', $this->defaultGroupProperties($branch, $officename, $properties));
+    if ($id) {
+      return $id;
+    }
+    return $this->getProperty('group-email', $this->defaultGroupProperties($branch, $officename, $properties));
   }
 
   /**
    * The standard policy for the primary group
    * email address is to use branch-office@domain.
    */
-  function getGroupEmail($branch, $officename) {
-    return $this->getProperty('group-email', $this->defaultGroupProperties($branch, $officename));
+  function getGroupEmail($branch, $officename, $properties = array()) {
+    return $this->getProperty('group-email', $this->defaultGroupProperties($branch, $officename, $properties));
   }
 
   function getGroupDefaultAlternateAddresses($branch, $officename, $properties = array()) {
@@ -234,6 +238,9 @@ class StandardGroupPolicy implements GroupPolicy {
   }
 
   protected function applyTemplate($template, $properties) {
+    if (!$template) {
+      return NULL;
+    }
     $result = $template;
     preg_match_all('/\$([{(])([a-z-]*)[})]/', $template, $matches, PREG_SET_ORDER);
     foreach ($matches as $match) {
@@ -277,15 +284,27 @@ class StandardGroupPolicy implements GroupPolicy {
     foreach ($aliasGroups as $office => $data) {
       $data = $this->normalizeMembershipData($data);
       $data['properties'] += $default;
+      // If the user supplied an email address for the group that is different than
+      // the generated email address, then use the generated address instead
+      // here.  We'll convert the supplied address into an alternate address.
+      $suppliedGroupEmail = $this->getGroupEmail($branch, $office, $data['properties']);
+      unset($data['properties']['group-email']);
+      $standardGroupEmail = $this->getGroupEmail($branch, $office, $data['properties']);
       $data['properties'] += array(
-        'group-email' => $this->getGroupEmail($branch, $office),
-        'group-id' => $this->getGroupId($branch, $office),
+        'group-email' => $standardGroupEmail,
       );
-      $propertiesForGroupName = $data['properties'] + $this->defaultGroupProperties($branch, $office);
       $data['properties'] += array(
-        'group-name' => $this->getGroupName($branch, $office, $propertiesForGroupName),
+        'group-id' => $this->getGroupId($branch, $office, $data['properties']),
       );
+      $data['properties'] += array(
+        'group-name' => $this->getGroupName($branch, $office, $data['properties']),
+      );
+      // Get the alternate addresses for this group; add in the supplied
+      // group address, if it was different than the generated address.
       $alternate_addresses = $this->getGroupDefaultAlternateAddresses($branch, $office, $data['properties']);
+      if ($standardGroupEmail != $suppliedGroupEmail) {
+        $alternate_addresses[] = $suppliedGroupEmail;
+      }
       if (!empty($alternate_addresses)) {
         if (!isset($data['properties']['alternate-addresses'])) {
           $data['properties']['alternate-addresses'] = array();

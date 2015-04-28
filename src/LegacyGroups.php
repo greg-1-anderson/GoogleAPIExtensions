@@ -37,7 +37,7 @@ class LegacyGroups {
         $memberships['_legacy']['lists'][$legacyOfficename] = array(
           'members' => $members,
           'properties' => array(
-            'group-email' => $legacyGroup,
+            'alternate-addresses' => array($legacyGroup),
           ),
         );
       }

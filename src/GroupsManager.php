@@ -104,7 +104,7 @@ class GroupsManager {
     $aggregatedGroups = array();
     unset($memberships['_aggregated']);
     foreach ($memberships as $branch => $offices) {
-      if ($branch[0] != '#') {
+      if (($branch[0] != '#') && array_key_exists('lists', $offices)) {
         foreach ($offices['lists'] as $office => $officeData) {
           // Get the list of aggragated lists for this group.
           $aggragatedLists = $this->policy->getAggregatedGroups($branch, $office, $officeData['properties']);
@@ -144,7 +144,7 @@ class GroupsManager {
 
   function updateBranch($branch, $updateOffices) {
     $existingState = $this->journal->getExistingState();
-    $existingOffices = $existingState[$branch]['lists'];
+    $existingOffices = isset($existingState[$branch]['lists']) ? $existingState[$branch]['lists'] : array();
     return $this->updateAlteredBranch($branch, $updateOffices, $existingOffices);
   }
 

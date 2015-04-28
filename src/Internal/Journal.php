@@ -8,6 +8,7 @@ class Journal {
   protected $ctrl;
   protected $operationQueues;
   protected $existingState = array();
+  protected $log;
 
   const SETUP_QUEUE = 'setup';
   const CREATION_QUEUE = 'create';
@@ -27,6 +28,12 @@ class Journal {
       unset($this->existingState['#queues']);
       $this->importOperationQueues($queues);
     }
+    $this->log = function($line) { print($line); };
+  }
+
+  function log($line) {
+    $log = $this->log;
+    // $log($line);
   }
 
   function getExistingState() {
@@ -200,6 +207,7 @@ class Journal {
   }
 
   function insertBranch($branch) {
+    $this->log("insert $branch\n");
     $op = new Operation(
       array($this->ctrl, "insertBranch"),
       array($branch),
@@ -209,12 +217,14 @@ class Journal {
   }
 
   function insertBranchVerified($op, $branch) {
+    $this->log("verified $branch");
     if (!array_key_exists($branch, $this->existingState)) {
       $this->existingState[$branch] = array();
     }
   }
 
   function deleteBranch($branch) {
+    $this->log("delete $branch");
     $op = new Operation(
       array($this->ctrl, "deleteBranch"),
       array($branch)
@@ -223,10 +233,12 @@ class Journal {
   }
 
   function deleteBranchVerified($op, $branch) {
+    $this->log("verified delete $branch");
     unset($this->existingState[$branch]);
   }
 
   function insertMember($branch, $officename, $group_id, $memberEmailAddress) {
+    $this->log("insert into $branch $officename ($group_id) $memberEmailAddress\n");
     $op = new Operation(
       array($this->ctrl, "insertMember"),
       array($branch, $officename, $group_id, $memberEmailAddress),
@@ -236,11 +248,13 @@ class Journal {
   }
 
   function insertMemberVerified($op, $branch, $officename, $group_id, $memberEmailAddress) {
+    $this->log("verified insert into $branch $officename ($group_id) $memberEmailAddress\n");
     // TODO: unique only. Should we sort as well?
     $this->existingState[$branch]['lists'][$officename]['members'][] = $memberEmailAddress;
   }
 
   function removeMember($branch, $officename, $group_id, $memberEmailAddress) {
+    $this->log("remove from $branch $officename ($group_id) $memberEmailAddress\n");
     $op = new Operation(
       array($this->ctrl, "removeMember"),
       array($branch, $officename, $group_id, $memberEmailAddress)
@@ -249,11 +263,13 @@ class Journal {
   }
 
   function removeMemberVerified($op, $branch, $officename, $group_id, $memberEmailAddress) {
+    $this->log("verified remove from $branch $officename ($group_id) $memberEmailAddress\n");
     // TODO: unique only. Should we sort as well?
     unset($this->existingState[$branch]['lists'][$officename]['members'][$memberEmailAddress]);
   }
 
   function insertGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
+    $this->log("alternate address for $branch $officename ($group_id): $alternateAddress\n");
     $op = new Operation(
       array($this->ctrl, "insertGroupAlternateAddress"),
       array($branch, $officename, $group_id, $alternateAddress),
@@ -263,11 +279,13 @@ class Journal {
   }
 
   function insertGroupAlternateAddressVerified($op, $branch, $officename, $group_id, $alternateAddress) {
+    $this->log("verified alternate address for $branch $officename ($group_id): $alternateAddress\n");
     // TODO: unique only. Should we sort as well?
     $this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'][] = $alternateAddress;
   }
 
   function removeGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
+    $this->log("remove alternate address for $branch $officename ($group_id): $alternateAddress\n");
     $op = new Operation(
       array($this->ctrl, "removeGroupAlternateAddress"),
       array($branch, $officename, $group_id, $alternateAddress)
@@ -276,10 +294,12 @@ class Journal {
   }
 
   function removeGroupAlternateAddressVerified($op, $branch, $officename, $group_id, $alternateAddress) {
+    $this->log("verified remove alternate address for $branch $officename ($group_id): $alternateAddress\n");
     unset($this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'][$alternateAddress]);
   }
 
   function insertOffice($branch, $officename, $properties) {
+    $this->log("insert $branch $officename\n");
     $op = new Operation(
       array($this->ctrl, "insertOffice"),
       array($branch, $officename, $properties),
@@ -295,6 +315,7 @@ class Journal {
   }
 
   function insertOfficeVerified($op, $branch, $officename, $properties) {
+    $this->log("verified insert $branch $officename\n");
     foreach (array('group-name', 'group-email', 'group-id') as $key) {
       if (array_key_exists($key, $properties)) {
         $this->existingState[$branch]['lists'][$officename]['properties'][$key] = $properties[$key];
@@ -308,6 +329,7 @@ class Journal {
   }
 
   function deleteOffice($branch, $officename, $properties) {
+    $this->log("delete $branch $officename\n");
     $op = new Operation(
       array($this->ctrl, "deleteOffice"),
       array($branch, $officename, $properties)
@@ -316,9 +338,11 @@ class Journal {
   }
 
   function deleteOfficeVerified($op, $branch, $officename, $properties) {
+    $this->log("verified delete $branch $officename\n");
     unset($this->existingState[$branch]['lists'][$officename]);
   }
 
   function complete() {
   }
 }
+

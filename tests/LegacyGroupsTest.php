@@ -64,7 +64,8 @@ _legacy:
         - person1@somewhere.org
         - person2@somewhereelse.org
       properties:
-        group-email: old-legacy@westkingdom.org";
+        alternate-addresses:
+          - old-legacy@westkingdom.org";
 
     $this->assertEquals(trim($expected), $this->arrayToYaml($testMemberships));
 

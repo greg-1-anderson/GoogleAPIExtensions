@@ -11,15 +11,22 @@ class GroupsManager {
 
   /**
    * @param $ctrl control object that does actual actions
+   * @param $policy policy object that decides how groups are named, etc.
    * @param $state initial state
+   * @param $journal internal object, provided during testing only.
    */
-  function __construct(GroupsController $ctrl, $policy, $state) {
+  function __construct(GroupsController $ctrl, $policy, $state, $journal = NULL) {
     $this->ctrl = $ctrl;
     $this->policy = $policy;
     if (!isset($state['_aggregated']['lists'])) {
       $state['_aggregated']['lists'] = array();
     }
-    $this->journal = new Journal($ctrl, $state);
+    if ($journal == NULL) {
+      $this->journal = new Journal($ctrl, $state);
+    }
+    else {
+      $this->journal = $journal;
+    }
   }
 
   static function createForDomain($applicationName, $domain, $state) {
@@ -104,7 +111,7 @@ class GroupsManager {
     $aggregatedGroups = array();
     unset($memberships['_aggregated']);
     foreach ($memberships as $branch => $offices) {
-      if (($branch[0] != '#') && array_key_exists('lists', $offices)) {
+      if ((ctype_alpha($branch[0])) && array_key_exists('lists', $offices)) {
         foreach ($offices['lists'] as $office => $officeData) {
           // Get the list of aggragated lists for this group.
           $aggragatedLists = $this->policy->getAggregatedGroups($branch, $office, $officeData['properties']);
@@ -114,6 +121,13 @@ class GroupsManager {
         }
       }
     }
+    // Go back and remove any aggregated group that has only one member
+    foreach ($aggregatedGroups as $group => $data) {
+      if (!isset($data['members']) || (count($data['members']) <= 1)) {
+        unset($aggregatedGroups[$group]);
+      }
+    }
+
     return $aggregatedGroups;
   }
 

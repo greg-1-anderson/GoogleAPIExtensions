@@ -2,6 +2,8 @@
 
 use Westkingdom\GoogleAPIExtensions\GroupsManager;
 use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
+use Westkingdom\GoogleAPIExtensions\Internal\Journal;
+
 use Prophecy\PhpUnit\ProphecyTestCase;
 use Prophecy\Argument\Token\AnyValueToken;
 use Symfony\Component\Yaml\Yaml;
@@ -23,15 +25,7 @@ west:
         - minister@sca.org
         - deputy@sca.org
       properties:
-        group-name: West Kingdom Web Minister
-_aggregated:
-  lists:
-    all-webministers:
-      members:
-        - west-webminister@testdomain.org
-    west-officers:
-      members:
-        - west-webminister@testdomain.org";
+        group-name: West Kingdom Web Minister";
     $this->initialState = Yaml::parse(trim($groupData));
 
     $properties = array(
@@ -126,7 +120,7 @@ fogs:
 
   public function testLoadingOfTestData() {
     // Do a nominal test to check to see that our test data loaded
-    $this->assertEquals('west,_aggregated', implode(',', array_keys($this->initialState)));
+    $this->assertEquals('west', implode(',', array_keys($this->initialState)));
   }
 
   public function testImportOperations() {
@@ -219,13 +213,7 @@ west:
       properties:
         group-name: 'West Kingdom Web Minister'
 _aggregated:
-  lists:
-    all-webministers:
-      members:
-        - west-webminister@testdomain.org
-    west-officers:
-      members:
-        - west-webminister@testdomain.org
+  lists: {  }
 '#queues':
   default:
     -
@@ -286,7 +274,9 @@ _aggregated:
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
     $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
-    $groupManager = new GroupsManager($testController->reveal(), $this->policy, $this->initialState);
+    $revealedController = $testController->reveal();
+    $journal = new Journal($revealedController, $this->initialState);
+    $groupManager = new GroupsManager($revealedController, $this->policy, $this->initialState, $journal);
 
     // Prophesize that the new user will be added to the west webministers group.
     $testController->begin()->shouldBeCalled();
@@ -297,6 +287,14 @@ _aggregated:
     $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", array("group-name" => "West Seneschal", "group-email" => "west-seneschal@testdomain.org", "group-id" => "west-seneschal@testdomain.org")));
     $testController->insertMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
     $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "seneschal", "west-seneschal@testdomain.org", "anne@kingdom.org"));
+    $testController->insertOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", array("group-name" => "West Officers", "group-email" => "west-officers@testdomain.org", "group-id" => "west-officers@testdomain.org")));
+    $testController->configureOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", array("group-name" => "West Officers", "group-email" => "west-officers@testdomain.org", "group-id" => "west-officers@testdomain.org")));
+    $testController->verifyOfficeConfiguration()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", array("group-name" => "West Officers", "group-email" => "west-officers@testdomain.org", "group-id" => "west-officers@testdomain.org")));
+    $testController->verifyOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", array("group-name" => "West Officers", "group-email" => "west-officers@testdomain.org", "group-id" => "west-officers@testdomain.org")));
+    $testController->insertMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", "west-officers@testdomain.org", "west-webminister@testdomain.org"));
+    $testController->insertMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", "west-officers@testdomain.org", "west-webminister@testdomain.org"));
+    $testController->verifyMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "west-officers", "west-officers@testdomain.org", "west-seneschal@testdomain.org"));
 
 //    $testController->insertOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
 //    $testController->configureOffice()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "_aggregated", "all-seneschals", array("group-id" => "all-seneschals@testdomain.org", "group-name" => "All Seneschals", "group-email" => "all-seneschals@testdomain.org")));
@@ -314,5 +312,33 @@ _aggregated:
     // behavior during teardown.
     $groupManager->update($newState);
     $groupManager->execute();
+
+    // Force the call to insertOfficeVerified, so we can test the generation
+    // of aggregated groups.
+    $journal->insertOfficeVerified(array(), 'west', 'seneschal', $newState['west']['lists']['seneschal']['properties']);
+
+    // Call 'execute' again, to insure that updateAggregated() is called.
+    $groupManager->execute();
+
+    // We don't see the aggregated group here, because the verify functions
+    // are never called (due to the mocked controller), so the verified()
+    // functions are never called, and these are what update the state.
+    $expectedFinalState = "
+west:
+  lists:
+    seneschal:
+      properties:
+        group-name: 'West Seneschal'
+    webminister:
+      members:
+        - deputy@sca.org
+        - minister@sca.org
+      properties:
+        group-name: 'West Kingdom Web Minister'";
+
+    $state = $groupManager->export();
+    unset($state['#queues']);
+    $this->assertEquals(trim($expectedFinalState), $this->arrayToYaml($state));
+
   }
 }

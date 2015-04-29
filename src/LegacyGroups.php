@@ -37,6 +37,7 @@ class LegacyGroups {
         $memberships['_legacy']['lists'][$legacyOfficename] = array(
           'members' => $members,
           'properties' => array(
+            'group-name' => ucfirst(strtr($legacyOfficename, '-', ' ')),
             'alternate-addresses' => array($legacyGroup),
           ),
         );
@@ -66,7 +67,7 @@ class LegacyGroups {
   }
 
   static protected function legacyGroupMatches($legacyGroup, $officename, $officeData) {
-    if ($legacyGroup == $officeData['properties']['group-email']) {
+    if (isset($officeData['properties']['group-email']) && ($legacyGroup == $officeData['properties']['group-email'])) {
       return TRUE;
     }
     return isset($officeData['properties']['alternate-addresses']) && in_array($legacyGroup, $officeData['properties']['alternate-addresses']);

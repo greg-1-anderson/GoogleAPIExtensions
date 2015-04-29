@@ -39,7 +39,7 @@ west:
     $testLegacy ="
 west-webminister@westkingdom.org   anotherwebguy@hitec.com
 webminister@westkingdom.org   deputywebdude@boilerstrap.com
-old-legacy@westkingdom.org   person1@somewhere.org,person2@somewhereelse.org";
+some-old-group@westkingdom.org   person1@somewhere.org,person2@somewhereelse.org";
 
     $testMemberships = LegacyGroups::applyLegacyGroups($testMemberships, LegacyGroups::parseLegacyDreamHostGroups($testLegacy));
 
@@ -59,13 +59,14 @@ west:
           - webminister@westkingdom.org
 _legacy:
   lists:
-    old-legacy:
+    some-old-group:
       members:
         - person1@somewhere.org
         - person2@somewhereelse.org
       properties:
+        group-name: 'Some old group'
         alternate-addresses:
-          - old-legacy@westkingdom.org";
+          - some-old-group@westkingdom.org";
 
     $this->assertEquals(trim($expected), $this->arrayToYaml($testMemberships));
 

@@ -264,8 +264,9 @@ class Journal {
 
   function removeMemberVerified($op, $branch, $officename, $group_id, $memberEmailAddress) {
     $this->log("verified remove from $branch $officename ($group_id) $memberEmailAddress\n");
-    // TODO: unique only. Should we sort as well?
-    unset($this->existingState[$branch]['lists'][$officename]['members'][$memberEmailAddress]);
+    $this->existingState[$branch]['lists'][$officename]['members'] = array_unique(array_diff(
+      $this->existingState[$branch]['lists'][$officename]['members'],
+      array($memberEmailAddress)));
   }
 
   function insertGroupAlternateAddress($branch, $officename, $group_id, $alternateAddress) {
@@ -295,7 +296,9 @@ class Journal {
 
   function removeGroupAlternateAddressVerified($op, $branch, $officename, $group_id, $alternateAddress) {
     $this->log("verified remove alternate address for $branch $officename ($group_id): $alternateAddress\n");
-    unset($this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'][$alternateAddress]);
+    $this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'] = array_unique(array_diff(
+      $this->existingState[$branch]['lists'][$officename]['properties']['alternate-addresses'],
+      array($alternateAddress)));
   }
 
   function insertOffice($branch, $officename, $properties) {

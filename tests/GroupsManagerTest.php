@@ -245,23 +245,43 @@ _aggregated:
     // Create a new state object by copying our existing state and adding
     // a member to the "west-webminister" group.
     $newState = $this->initialState;
-    array_pop($newState['west']['lists']['webminister']['members']);
+    $removed = array_pop($newState['west']['lists']['webminister']['members']);
 
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
     $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
-    $groupManager = new GroupsManager($testController->reveal(), $this->policy, $this->initialState);
+    $revealedController = $testController->reveal();
+    $journal = new Journal($revealedController, $this->initialState);
+    $groupManager = new GroupsManager($revealedController, $this->policy, $this->initialState, $journal);
 
     // Prophesize that a user will be removed from the west webministers group,
     // and then removed again
     $testController->begin()->shouldBeCalled();
-    $testController->removeMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", "deputy@sca.org"));
+    $testController->removeMember()->shouldBeCalled()->withArguments(array(new AnyValueToken(), "west", "webminister", "west-webminister@testdomain.org", $removed));
     $testController->complete()->shouldBeCalled()->withArguments(array(TRUE));
 
     // Update the group.  The prophecies are checked against actual
     // behavior during teardown.
     $groupManager->update($newState);
     $groupManager->execute();
+
+    // Again, we have mocked the group controller, so verification is not done.
+    // If the controller did verify, then it would call the following function
+    $journal->removeMemberVerified(NULL, "west", "webminister", "west-webminister@testdomain.org", $removed);
+
+    $expectedFinalState = "
+west:
+  lists:
+    webminister:
+      members:
+        - minister@sca.org
+      properties:
+        group-name: 'West Kingdom Web Minister'";
+
+    $state = $groupManager->export();
+    unset($state['#queues']);
+    $this->assertEquals(trim($expectedFinalState), $this->arrayToYaml($state));
+
   }
 
   public function testInsertOffice() {

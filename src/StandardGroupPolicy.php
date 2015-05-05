@@ -90,7 +90,7 @@ class StandardGroupPolicy implements GroupPolicy {
       // TODO: if we had a list of valid subdomains, e.g. sub.domain.org, then
       // we could also test to see if $branch == sub, then create an
       // alias 'office@sub.domain.org' for the standard 'sub-office@domain.org'.
-      $branchIsSubdomain = $this->getProperty('is-subdomain', $groupProperties);
+      $branchIsSubdomain = $this->isSubdomain($branch, $groupProperties);
       if ($branchIsSubdomain) {
         $alternate_addresses[] = $this->getProperty('subdomain-group-email', $groupProperties);
       }
@@ -118,14 +118,10 @@ class StandardGroupPolicy implements GroupPolicy {
       'simplified-office-plural' => $this->simplifyOfficeName($this->plural($result['simplified-office'])),
     );
 
-    if ($this->isSubdomain($branch, $result)) {
-      $result['is-subdomain'] = TRUE;
-    }
-
     return $result;
   }
 
-  function isSubdomain($branch, $properties) {
+  function isSubdomain($branch, $properties = array()) {
     $subdomains = $this->getProperty('subdomains', $properties);
     if (empty($subdomains)) {
       return FALSE;
@@ -139,7 +135,7 @@ class StandardGroupPolicy implements GroupPolicy {
     }
     $subdomains = explode(',', $subdomains);
     $result = in_array($branch, $subdomains);
-    return $result ^ $negate;
+    return $negate ? !$result : $result;
   }
 
   // TODO:  is there somewhere we could store the plural for office-plural?

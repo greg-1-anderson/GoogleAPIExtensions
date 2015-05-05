@@ -30,7 +30,7 @@ west:
 
     $properties = array(
       'top-level-group' => 'north',
-      'subdomains' => 'fogs'
+      'subdomains' => 'fogs,geese,wolves,lightwoods',
     );
     $this->policy = new StandardGroupPolicy('testdomain.org', $properties);
   }
@@ -171,6 +171,11 @@ seamountain:
   }
 
   public function testAggregatedSubgroups() {
+    $this->assertTrue($this->policy->isSubdomain('fogs'));
+    $this->assertTrue($this->policy->isSubdomain('wolves'));
+
+    $this->assertYamlEquals("- president@fogs.testdomain.org", $this->policy->getGroupDefaultAlternateAddresses('fogs', 'president'));
+
     $data = Yaml::parse("
 north:
   lists:
@@ -229,6 +234,84 @@ seamountain:
   subgroups: {  }");
 
     $data = $this->policy->normalize($data);
+
+    // Strip out 'members' and 'subgroups', as we are only
+    // testing the properties here.
+    $reducedData = array();
+    foreach ($data as $branch => $branchinfo) {
+      foreach ($branchinfo['lists'] as $office => $officeinfo) {
+        $reducedData[$branch]['lists'][$office]['properties'] = $officeinfo['properties'];
+      }
+    }
+
+    $expected = "
+north:
+  lists:
+    president:
+      properties:
+        group-email: north-president@testdomain.org
+        group-id: north-president@testdomain.org
+        group-name: 'North President'
+        alternate-addresses:
+          - president@testdomain.org
+fogs:
+  lists:
+    president:
+      properties:
+        group-email: fogs-president@testdomain.org
+        group-id: fogs-president@testdomain.org
+        group-name: 'Fogs President'
+        alternate-addresses:
+          - president@fogs.testdomain.org
+geese:
+  lists:
+    president:
+      properties:
+        group-email: geese-president@testdomain.org
+        group-id: geese-president@testdomain.org
+        group-name: 'Geese President'
+        alternate-addresses:
+          - president@geese.testdomain.org
+wolves:
+  lists:
+    president:
+      properties:
+        group-email: wolves-president@testdomain.org
+        group-id: wolves-president@testdomain.org
+        group-name: 'Wolves President'
+        alternate-addresses:
+          - president@wolves.testdomain.org
+lightwoods:
+  lists:
+    president:
+      properties:
+        group-email: lightwoods-president@testdomain.org
+        group-id: lightwoods-president@testdomain.org
+        group-name: 'Lightwoods President'
+        alternate-addresses:
+          - president@lightwoods.testdomain.org
+gustyplains:
+  lists:
+    president:
+      properties:
+        group-email: gustyplains-president@testdomain.org
+        group-id: gustyplains-president@testdomain.org
+        group-name: 'Gustyplains President'
+coldholm:
+  lists:
+    president:
+      properties:
+        group-email: coldholm-president@testdomain.org
+        group-id: coldholm-president@testdomain.org
+        group-name: 'Coldholm President'
+seamountain:
+  lists:
+    president:
+      properties:
+        group-email: seamountain-president@testdomain.org
+        group-id: seamountain-president@testdomain.org
+        group-name: 'Seamountain President'";
+    $this->assertYamlEquals(trim($expected), $reducedData);
 
     $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
     $groupManager = new GroupsManager($testController->reveal(), $this->policy, $data);

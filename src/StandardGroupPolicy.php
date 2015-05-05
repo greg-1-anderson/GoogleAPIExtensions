@@ -53,6 +53,9 @@ class StandardGroupPolicy implements GroupPolicy {
       'aggragate-branch-officers-name' => '${branch} Officers',
       'aggragate-branch-officers-key' => '$(simplified-branch)-officers',
       'aggragate-branch-officers-email' => '$(simplified-branch)-officers@$(domain)',
+      'aggragate-all-subgroup-name' => 'All ${subgroup} ${office-plural}',
+      'aggrageat-all-subgroup-key' => '$(subgroup)-all-$(simplified-office-plural)',
+      'aggrageat-all-subgroup-email' => '$(subgroup)-all-$(simplified-office-plural)@$(domain)',
     );
   }
 
@@ -175,18 +178,37 @@ class StandardGroupPolicy implements GroupPolicy {
    *   office is a member of.  The properties of the resulting item should
    *   include the group-id, the group-name, and the group-email.
    */
-  function getAggregatedGroups($branch, $officename, $properties = array()) {
+  function getAggregatedGroups($branch, $officename, $properties = array(), $parantage = array()) {
+    $office_properties = $this->defaultGroupProperties($branch, $officename, $properties);
+    $top_level_group = $this->getProperty('top-level-group', $office_properties);
     $result = array();
-    $allName = $this->getProperty('aggragate-all-name', $this->defaultGroupProperties($branch, $officename, $properties));
-    $allEmail = $this->getProperty('aggrageat-all-email', $this->defaultGroupProperties($branch, $officename, $properties));
-    $allKey = $this->getProperty('aggrageat-all-key', $this->defaultGroupProperties($branch, $officename, $properties));
+
+    // Put in an entry for 'all-$officename@domain'
+    $allName = $this->getProperty('aggragate-all-name', $office_properties);
+    $allEmail = $this->getProperty('aggrageat-all-email', $office_properties);
+    $allKey = $this->getProperty('aggrageat-all-key', $office_properties);
     $result[$allKey] = array('group-id' => $allEmail, 'group-name' => $allName, 'group-email' => $allEmail);
 
-    $officersName = $this->getProperty('aggragate-branch-officers-name', $this->defaultGroupProperties($branch, $officename, $properties));
-    $officersEmail = $this->getProperty('aggragate-branch-officers-email', $this->defaultGroupProperties($branch, $officename, $properties));
-    $officersKey = $this->getProperty('aggragate-branch-officers-key', $this->defaultGroupProperties($branch, $officename, $properties));
+    // Also put in an entry for '$branch-officers@domain'
+    $officersName = $this->getProperty('aggragate-branch-officers-name', $office_properties);
+    $officersEmail = $this->getProperty('aggragate-branch-officers-email', $office_properties);
+    $officersKey = $this->getProperty('aggragate-branch-officers-key', $office_properties);
     $result[$officersKey] = array('group-id' => $officersEmail, 'group-name' => $officersName, 'group-email' => $officersEmail);
 
+    // If this is not a top-level group, then put in an entry
+    // for 'all-$parantage-$officename@domain' for each item
+    // in this subgroup's parantage -- including the subgroup itself.
+    if ($top_level_group != $branch) {
+      $parantage[] = $branch;
+      foreach ($parantage as $subgroup) {
+        $office_properties['subgroup'] = $subgroup;
+
+        $allName = $this->getProperty('aggragate-all-subgroup-name', $office_properties);
+        $allEmail = $this->getProperty('aggrageat-all-subgroup-email', $office_properties);
+        $allKey = $this->getProperty('aggrageat-all-subgroup-key', $office_properties);
+        $result[$allKey] = array('group-id' => $allEmail, 'group-name' => $allName, 'group-email' => $allEmail);
+      }
+    }
     return $result;
   }
 
@@ -265,8 +287,11 @@ class StandardGroupPolicy implements GroupPolicy {
 
   function normalize($state) {
     $result = array();
-    foreach ($state as $branch => $listsAndAliases) {
-      $result[$branch] = $this->normalizeLists($branch, $listsAndAliases);
+    foreach ($state as $branch => $branchInfo) {
+      $result[$branch] = $this->normalizeLists($branch, $branchInfo);
+      if (array_key_exists('subgroups', $branchInfo)) {
+        $result[$branch]['subgroups'] = $branchInfo['subgroups'];
+      }
     }
     return $result;
   }

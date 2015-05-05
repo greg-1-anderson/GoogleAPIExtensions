@@ -132,14 +132,15 @@ class GroupsManager {
   /**
    * Generate aggragated groups
    */
-  protected function generateAggregatedGroups($memberships) {
+  function generateAggregatedGroups($memberships) {
     $aggregatedGroups = array();
     // Generate the aggregated group information
     foreach ($memberships as $branch => $branchinfo) {
       if ((ctype_alpha($branch[0])) && array_key_exists('lists', $branchinfo)) {
         foreach ($branchinfo['lists'] as $office => $officeData) {
           // Get the list of aggragated lists for this group.
-          $aggragatedLists = $this->policy->getAggregatedGroups($branch, $office, $officeData['properties']);
+          $parantage = isset($branchinfo['parantage']) ? $branchinfo['parantage'] : array();
+          $aggragatedLists = $this->policy->getAggregatedGroups($branch, $office, $officeData['properties'], $parantage);
           foreach ($aggragatedLists as $aggregateName => $aggregateGroupInfo) {
             $this->addAggregateGroupMember($aggregatedGroups, $branch, $office, $aggregateName, $aggregateGroupInfo);
           }

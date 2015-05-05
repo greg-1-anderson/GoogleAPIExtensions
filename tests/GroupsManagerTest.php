@@ -170,6 +170,126 @@ seamountain:
     $this->assertYamlEquals(trim($expected), $result);
   }
 
+  public function testAggregatedSubgroups() {
+    $data = Yaml::parse("
+north:
+  lists:
+    president:
+      members:
+        - bill@testdomain.org
+  subgroups:
+    - fogs
+    - geese
+    - wolves
+fogs:
+  lists:
+    president:
+      members:
+        - ron@testdomain.org
+  subgroups:
+    - lightwoods
+geese:
+  lists:
+    president:
+      members:
+        - george@testdomain.org
+  subgroups:
+    - gustyplains
+wolves:
+  lists:
+    president:
+      members:
+        - frank@testdomain.org
+  subgroups:
+    - coldholm
+lightwoods:
+  lists:
+    president:
+      members:
+        - alex@testdomain.org
+  subgroups:
+    - seamountain
+gustyplains:
+  lists:
+    president:
+      members:
+        - tom@testdomain.org
+  subgroups: {  }
+coldholm:
+  lists:
+    president:
+      members:
+        - richard@testdomain.org
+  subgroups: {  }
+seamountain:
+  lists:
+    president:
+      members:
+        - gerald@testdomain.org
+  subgroups: {  }");
+
+    $data = $this->policy->normalize($data);
+
+    $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
+    $groupManager = new GroupsManager($testController->reveal(), $this->policy, $data);
+
+    $data = $groupManager->generateParantage($data);
+    $result = $groupManager->generateAggregatedGroups($data);
+
+    $expected = "
+all-presidents:
+  properties:
+    group-id: all-presidents@testdomain.org
+    group-name: 'All Presidents'
+    group-email: all-presidents@testdomain.org
+  members:
+    - north-president@testdomain.org
+    - fogs-president@testdomain.org
+    - geese-president@testdomain.org
+    - wolves-president@testdomain.org
+    - lightwoods-president@testdomain.org
+    - gustyplains-president@testdomain.org
+    - coldholm-president@testdomain.org
+    - seamountain-president@testdomain.org
+fogs-all-presidents:
+  properties:
+    group-id: fogs-all-presidents@testdomain.org
+    group-name: 'All Fogs Presidents'
+    group-email: fogs-all-presidents@testdomain.org
+  members:
+    - fogs-president@testdomain.org
+    - lightwoods-president@testdomain.org
+    - seamountain-president@testdomain.org
+geese-all-presidents:
+  properties:
+    group-id: geese-all-presidents@testdomain.org
+    group-name: 'All Geese Presidents'
+    group-email: geese-all-presidents@testdomain.org
+  members:
+    - geese-president@testdomain.org
+    - gustyplains-president@testdomain.org
+wolves-all-presidents:
+  properties:
+    group-id: wolves-all-presidents@testdomain.org
+    group-name: 'All Wolves Presidents'
+    group-email: wolves-all-presidents@testdomain.org
+  members:
+    - wolves-president@testdomain.org
+    - coldholm-president@testdomain.org
+lightwoods-all-presidents:
+  properties:
+    group-id: lightwoods-all-presidents@testdomain.org
+    group-name: 'All Lightwoods Presidents'
+    group-email: lightwoods-all-presidents@testdomain.org
+  members:
+    - lightwoods-president@testdomain.org
+    - seamountain-president@testdomain.org";
+
+    $this->assertYamlEquals(trim($expected), $result);
+  }
+
+
+
   public function assertYamlEquals($expected, $data) {
     $this->assertEquals($this->arrayToYaml($expected), $this->arrayToYaml($data));
   }

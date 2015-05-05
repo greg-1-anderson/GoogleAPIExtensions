@@ -100,8 +100,33 @@ class GroupsManager {
   }
 
   protected function updateAggregated() {
-    $aggregated = $this->generateAggregatedGroups($this->journal->getExistingState());
+    $existingState = $this->journal->getExistingState();
+    unset($existingState['_aggregated']);
+    $existingState = $this->generateParantage($existingState);
+    $aggregated = $this->generateAggregatedGroups($existingState);
     $this->updateBranch('_aggregated', $aggregated);
+  }
+
+  function generateParantage($memberships) {
+    $top_level_group = $this->policy->getProperty('top-level-group');
+    if (array_key_exists($top_level_group, $memberships) && array_key_exists('subgroups', $memberships[$top_level_group])) {
+      foreach ($memberships[$top_level_group]['subgroups'] as $subgroup) {
+        $this->generateParantageForBranch($memberships, $subgroup);
+      }
+    }
+    return $memberships;
+  }
+
+  protected function generateParantageForBranch(&$memberships, $branch, $parantage = array()) {
+    if (array_key_exists('subgroups', $memberships[$branch])) {
+      array_unshift($parantage, $branch);
+      foreach ($memberships[$branch]['subgroups'] as $subgroup) {
+        if (array_key_exists($subgroup, $memberships)) {
+          $memberships[$subgroup]['parantage'] = $parantage;
+          $this->generateParantageForBranch($memberships, $subgroup, $parantage);
+        }
+      }
+    }
   }
 
   /**
@@ -109,10 +134,10 @@ class GroupsManager {
    */
   protected function generateAggregatedGroups($memberships) {
     $aggregatedGroups = array();
-    unset($memberships['_aggregated']);
-    foreach ($memberships as $branch => $offices) {
-      if ((ctype_alpha($branch[0])) && array_key_exists('lists', $offices)) {
-        foreach ($offices['lists'] as $office => $officeData) {
+    // Generate the aggregated group information
+    foreach ($memberships as $branch => $branchinfo) {
+      if ((ctype_alpha($branch[0])) && array_key_exists('lists', $branchinfo)) {
+        foreach ($branchinfo['lists'] as $office => $officeData) {
           // Get the list of aggragated lists for this group.
           $aggragatedLists = $this->policy->getAggregatedGroups($branch, $office, $officeData['properties']);
           foreach ($aggragatedLists as $aggregateName => $aggregateGroupInfo) {
@@ -131,6 +156,9 @@ class GroupsManager {
     return $aggregatedGroups;
   }
 
+  /**
+   * Add a member to one aggregate group
+   */
   protected function addAggregateGroupMember(&$aggregatedGroups, $branch, $office, $aggregatedGroupName, $aggregatedGroupProperties) {
     $emailAddress = $this->policy->getGroupEmail($branch, $office);
     if (!isset($aggregatedGroups[$aggregatedGroupName])) {

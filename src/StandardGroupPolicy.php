@@ -168,7 +168,12 @@ class StandardGroupPolicy implements GroupPolicy {
   }
 
   /**
+   * Determine the aggregate groups that this office is a member of.
+   *
    * @returns array 'name' => array of properties
+   *   Each item returned should be the name of an aggregate group that this
+   *   office is a member of.  The properties of the resulting item should
+   *   include the group-id, the group-name, and the group-email.
    */
   function getAggregatedGroups($branch, $officename, $properties = array()) {
     $result = array();

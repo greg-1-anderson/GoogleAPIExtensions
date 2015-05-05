@@ -102,6 +102,74 @@ fogs:
     $this->assertYamlEquals(trim($expected), $normalized);
   }
 
+  public function testParantage() {
+    $data = Yaml::parse("
+north:
+  subgroups:
+    - fogs
+    - geese
+    - wolves
+fogs:
+  subgroups:
+    - lightwoods
+geese:
+  subgroups:
+    - gustyplains
+wolves:
+  subgroups:
+    - coldholm
+lightwoods:
+  subgroups:
+    - seamountain
+gustyplains:
+  subgroups: {  }
+coldholm:
+  subgroups: {  }
+seamountain:
+  subgroups: {  }");
+
+    $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
+    $groupManager = new GroupsManager($testController->reveal(), $this->policy, $data);
+
+    $result = $groupManager->generateParantage($data);
+
+    $expected = "
+north:
+  subgroups:
+    - fogs
+    - geese
+    - wolves
+fogs:
+  subgroups:
+    - lightwoods
+geese:
+  subgroups:
+    - gustyplains
+wolves:
+  subgroups:
+    - coldholm
+lightwoods:
+  subgroups:
+    - seamountain
+  parantage:
+    - fogs
+gustyplains:
+  subgroups: {  }
+  parantage:
+    - geese
+coldholm:
+  subgroups: {  }
+  parantage:
+    - wolves
+seamountain:
+  subgroups: {  }
+  parantage:
+    - lightwoods
+    - fogs";
+
+    $this->assertYamlEquals(trim($expected), $result);
+  }
+
   public function assertYamlEquals($expected, $data) {
     $this->assertEquals($this->arrayToYaml($expected), $this->arrayToYaml($data));
   }

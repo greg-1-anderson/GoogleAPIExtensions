@@ -56,6 +56,7 @@ class StandardGroupPolicy implements GroupPolicy {
       'aggragate-all-subgroup-name' => 'All ${subgroup} ${office-plural}',
       'aggragate-all-subgroup-key' => '$(subgroup)-all-$(simplified-office-plural)',
       'aggragate-all-subgroup-email' => '$(simplified-subgroup)-all-$(simplified-office-plural)@$(domain)',
+      'subdomain-aggragate-all-subgroup-email' => 'all-$(simplified-office-plural)@$(simplified-subgroup).$(domain)',
     );
   }
 
@@ -204,6 +205,11 @@ class StandardGroupPolicy implements GroupPolicy {
         $allEmail = $this->getProperty('aggragate-all-subgroup-email', $office_properties);
         $allKey = $this->getProperty('aggragate-all-subgroup-key', $office_properties);
         $result[$allKey] = array('group-id' => $allEmail, 'group-name' => $allName, 'group-email' => $allEmail);
+        $subgroupIsSubdomain = $this->isSubdomain($subgroup, $office_properties);
+        if ($subgroupIsSubdomain) {
+          $allSubdomainEmail = $this->getProperty('subdomain-aggragate-all-subgroup-email', $office_properties);
+          $result[$allKey]['properties']['alternate-addresses'][] = $allSubdomainEmail;
+        }
       }
     }
     return $result;

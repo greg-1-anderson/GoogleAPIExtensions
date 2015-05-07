@@ -333,6 +333,9 @@ fogs-all-presidents:
     group-id: fogs-all-presidents@testdomain.org
     group-name: 'All Fogs Presidents'
     group-email: fogs-all-presidents@testdomain.org
+    properties:
+      alternate-addresses:
+        - all-presidents@fogs.testdomain.org
   members:
     - fogs-president@testdomain.org
     - lightwoods-president@testdomain.org
@@ -342,6 +345,9 @@ geese-all-presidents:
     group-id: geese-all-presidents@testdomain.org
     group-name: 'All Geese Presidents'
     group-email: geese-all-presidents@testdomain.org
+    properties:
+      alternate-addresses:
+        - all-presidents@geese.testdomain.org
   members:
     - geese-president@testdomain.org
     - gustyplains-president@testdomain.org
@@ -350,6 +356,9 @@ wolves-all-presidents:
     group-id: wolves-all-presidents@testdomain.org
     group-name: 'All Wolves Presidents'
     group-email: wolves-all-presidents@testdomain.org
+    properties:
+      alternate-addresses:
+        - all-presidents@wolves.testdomain.org
   members:
     - wolves-president@testdomain.org
     - coldholm-president@testdomain.org
@@ -358,6 +367,9 @@ lightwoods-all-presidents:
     group-id: lightwoods-all-presidents@testdomain.org
     group-name: 'All Lightwoods Presidents'
     group-email: lightwoods-all-presidents@testdomain.org
+    properties:
+      alternate-addresses:
+        - all-presidents@lightwoods.testdomain.org
   members:
     - lightwoods-president@testdomain.org
     - seamountain-president@testdomain.org";

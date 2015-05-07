@@ -102,6 +102,72 @@ fogs:
     $this->assertYamlEquals(trim($expected), $normalized);
   }
 
+
+  public function testParentage() {
+    $data = Yaml::parse("
+north:
+  subgroups:
+    - fogs
+    - geese
+    - wolves
+fogs:
+  subgroups:
+    - lightwoods
+geese:
+  subgroups:
+    - gustyplains
+wolves:
+  subgroups:
+    - coldholm
+lightwoods:
+  subgroups:
+    - seamountain
+gustyplains:
+  subgroups: {  }
+coldholm:
+  subgroups: {  }
+seamountain:
+  subgroups: {  }");
+
+    $result = $this->policy->generateParentage($data);
+
+    $expected = "
+north:
+  subgroups:
+    - fogs
+    - geese
+    - wolves
+fogs:
+  subgroups:
+    - lightwoods
+geese:
+  subgroups:
+    - gustyplains
+wolves:
+  subgroups:
+    - coldholm
+lightwoods:
+  subgroups:
+    - seamountain
+  parentage:
+    - fogs
+gustyplains:
+  subgroups: {  }
+  parentage:
+    - geese
+coldholm:
+  subgroups: {  }
+  parentage:
+    - wolves
+seamountain:
+  subgroups: {  }
+  parentage:
+    - lightwoods
+    - fogs";
+
+    $this->assertYamlEquals(trim($expected), $result);
+  }
+
   public function assertYamlEquals($expected, $data) {
     $this->assertEquals($this->arrayToYaml($expected), $this->arrayToYaml($data));
   }

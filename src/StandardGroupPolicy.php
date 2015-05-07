@@ -174,7 +174,7 @@ class StandardGroupPolicy implements GroupPolicy {
    *   office is a member of.  The properties of the resulting item should
    *   include the group-id, the group-name, and the group-email.
    */
-  function getAggregatedGroups($branch, $officename, $properties = array(), $parantage = array()) {
+  function getAggregatedGroups($branch, $officename, $properties = array(), $parentage = array()) {
     $office_properties = $this->defaultGroupProperties($branch, $officename, $properties);
     $top_level_group = $this->getProperty('top-level-group', $office_properties);
     $result = array();
@@ -192,11 +192,11 @@ class StandardGroupPolicy implements GroupPolicy {
     $result[$officersKey] = array('group-id' => $officersEmail, 'group-name' => $officersName, 'group-email' => $officersEmail);
 
     // If this is not a top-level group, then put in an entry
-    // for 'all-$parantage-$officename@domain' for each item
-    // in this subgroup's parantage -- including the subgroup itself.
+    // for 'all-$parentage-$officename@domain' for each item
+    // in this subgroup's parentage -- including the subgroup itself.
     if ($top_level_group != $branch) {
-      $parantage[] = $branch;
-      foreach ($parantage as $subgroup) {
+      $parentage[] = $branch;
+      foreach ($parentage as $subgroup) {
         $office_properties['subgroup'] = $subgroup;
 
         $allName = $this->getProperty('aggragate-all-subgroup-name', $office_properties);
@@ -279,6 +279,28 @@ class StandardGroupPolicy implements GroupPolicy {
       $result = str_replace($match[0], $replacement, $result);
     }
     return $result;
+  }
+
+  function generateParentage($memberships) {
+    $top_level_group = $this->getProperty('top-level-group');
+    if (array_key_exists($top_level_group, $memberships) && array_key_exists('subgroups', $memberships[$top_level_group])) {
+      foreach ($memberships[$top_level_group]['subgroups'] as $subgroup) {
+        $this->generateParentageForBranch($memberships, $subgroup);
+      }
+    }
+    return $memberships;
+  }
+
+  protected function generateParentageForBranch(&$memberships, $branch, $parentage = array()) {
+    if (array_key_exists('subgroups', $memberships[$branch])) {
+      array_unshift($parentage, $branch);
+      foreach ($memberships[$branch]['subgroups'] as $subgroup) {
+        if (array_key_exists($subgroup, $memberships)) {
+          $memberships[$subgroup]['parentage'] = $parentage;
+          $this->generateParentageForBranch($memberships, $subgroup, $parentage);
+        }
+      }
+    }
   }
 
   function normalize($state) {

@@ -102,31 +102,9 @@ class GroupsManager {
   protected function updateAggregated() {
     $existingState = $this->journal->getExistingState();
     unset($existingState['_aggregated']);
-    $existingState = $this->generateParantage($existingState);
+    $existingState = $this->policy->generateParentage($existingState);
     $aggregated = $this->generateAggregatedGroups($existingState);
     $this->updateBranch('_aggregated', $aggregated);
-  }
-
-  function generateParantage($memberships) {
-    $top_level_group = $this->policy->getProperty('top-level-group');
-    if (array_key_exists($top_level_group, $memberships) && array_key_exists('subgroups', $memberships[$top_level_group])) {
-      foreach ($memberships[$top_level_group]['subgroups'] as $subgroup) {
-        $this->generateParantageForBranch($memberships, $subgroup);
-      }
-    }
-    return $memberships;
-  }
-
-  protected function generateParantageForBranch(&$memberships, $branch, $parantage = array()) {
-    if (array_key_exists('subgroups', $memberships[$branch])) {
-      array_unshift($parantage, $branch);
-      foreach ($memberships[$branch]['subgroups'] as $subgroup) {
-        if (array_key_exists($subgroup, $memberships)) {
-          $memberships[$subgroup]['parantage'] = $parantage;
-          $this->generateParantageForBranch($memberships, $subgroup, $parantage);
-        }
-      }
-    }
   }
 
   /**
@@ -139,8 +117,8 @@ class GroupsManager {
       if ((ctype_alpha($branch[0])) && array_key_exists('lists', $branchinfo)) {
         foreach ($branchinfo['lists'] as $office => $officeData) {
           // Get the list of aggragated lists for this group.
-          $parantage = isset($branchinfo['parantage']) ? $branchinfo['parantage'] : array();
-          $aggragatedLists = $this->policy->getAggregatedGroups($branch, $office, $officeData['properties'], $parantage);
+          $parentage = isset($branchinfo['parentage']) ? $branchinfo['parentage'] : array();
+          $aggragatedLists = $this->policy->getAggregatedGroups($branch, $office, $officeData['properties'], $parentage);
           foreach ($aggragatedLists as $aggregateName => $aggregateGroupInfo) {
             $this->addAggregateGroupMember($aggregatedGroups, $branch, $office, $aggregateName, $aggregateGroupInfo);
           }

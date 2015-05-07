@@ -52,6 +52,11 @@ interface GroupPolicy {
   function normalizeEmail($email);
 
   /**
+   * Generate 'parentage' elements from 'subgroups' elements.
+   */
+  function generateParentage($memberships);
+
+  /**
    * Normalize the entire state record
    */
   function normalize($state);

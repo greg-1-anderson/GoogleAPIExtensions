@@ -182,7 +182,7 @@ seamountain:
     $groupManager = new GroupsManager($testController->reveal(), $this->policy, $data);
 
     $data = $this->policy->generateParentage($data);
-    $result = $groupManager->generateAggregatedGroups($data);
+    $result = $this->policy->generateAggregatedGroups($data);
 
     $expected = "
 all-presidents:

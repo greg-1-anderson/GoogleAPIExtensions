@@ -303,6 +303,48 @@ class StandardGroupPolicy implements GroupPolicy {
     }
   }
 
+
+  /**
+   * Generate aggragated groups
+   */
+  function generateAggregatedGroups($memberships) {
+    $aggregatedGroups = array();
+    // Generate the aggregated group information
+    foreach ($memberships as $branch => $branchinfo) {
+      if ((ctype_alpha($branch[0])) && array_key_exists('lists', $branchinfo)) {
+        foreach ($branchinfo['lists'] as $office => $officeData) {
+          // Get the list of aggragated lists for this group.
+          $parentage = isset($branchinfo['parentage']) ? $branchinfo['parentage'] : array();
+          $aggragatedLists = $this->getAggregatedGroups($branch, $office, $officeData['properties'], $parentage);
+          foreach ($aggragatedLists as $aggregateName => $aggregateGroupInfo) {
+            $this->addAggregateGroupMember($aggregatedGroups, $branch, $office, $aggregateName, $aggregateGroupInfo);
+          }
+        }
+      }
+    }
+    // Go back and remove any aggregated group that has only one member
+    foreach ($aggregatedGroups as $group => $data) {
+      if (!isset($data['members']) || (count($data['members']) <= 1)) {
+        unset($aggregatedGroups[$group]);
+      }
+    }
+
+    return $aggregatedGroups;
+  }
+
+  /**
+   * Add a member to one aggregate group
+   */
+  protected function addAggregateGroupMember(&$aggregatedGroups, $branch, $office, $aggregatedGroupName, $aggregatedGroupProperties) {
+    $emailAddress = $this->getGroupEmail($branch, $office);
+    if (!isset($aggregatedGroups[$aggregatedGroupName])) {
+      $aggregatedGroups[$aggregatedGroupName] = array(
+        'properties' => $aggregatedGroupProperties,
+      );
+    }
+    $aggregatedGroups[$aggregatedGroupName]['members'][] = $emailAddress;
+  }
+
   function normalize($state) {
     $result = array();
     foreach ($state as $branch => $branchInfo) {

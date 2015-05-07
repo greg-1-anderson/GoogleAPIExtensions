@@ -55,7 +55,7 @@ class StandardGroupPolicy implements GroupPolicy {
       'aggragate-branch-officers-email' => '$(simplified-branch)-officers@$(domain)',
       'aggragate-all-subgroup-name' => 'All ${subgroup} ${office-plural}',
       'aggragate-all-subgroup-key' => '$(subgroup)-all-$(simplified-office-plural)',
-      'aggragate-all-subgroup-email' => '$(subgroup)-all-$(simplified-office-plural)@$(domain)',
+      'aggragate-all-subgroup-email' => '$(simplified-subgroup)-all-$(simplified-office-plural)@$(domain)',
     );
   }
 
@@ -198,6 +198,7 @@ class StandardGroupPolicy implements GroupPolicy {
       $parentage[] = $branch;
       foreach ($parentage as $subgroup) {
         $office_properties['subgroup'] = $subgroup;
+        $office_properties['simplified-subgroup'] = $this->simplify($subgroup);
 
         $allName = $this->getProperty('aggragate-all-subgroup-name', $office_properties);
         $allEmail = $this->getProperty('aggragate-all-subgroup-email', $office_properties);

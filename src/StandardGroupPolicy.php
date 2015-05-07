@@ -48,14 +48,14 @@ class StandardGroupPolicy implements GroupPolicy {
       'top-level-group-email' => '$(simplified-office)@$(domain)',
       'subdomain-group-email' => '$(simplified-office)@$(simplified-branch).$(domain)',
       'aggragate-all-name' => 'All ${office-plural}',
-      'aggrageat-all-key' => 'all-$(simplified-office-plural)',
-      'aggrageat-all-email' => 'all-$(simplified-office-plural)@$(domain)',
+      'aggragate-all-key' => 'all-$(simplified-office-plural)',
+      'aggragate-all-email' => 'all-$(simplified-office-plural)@$(domain)',
       'aggragate-branch-officers-name' => '${branch} Officers',
       'aggragate-branch-officers-key' => '$(simplified-branch)-officers',
       'aggragate-branch-officers-email' => '$(simplified-branch)-officers@$(domain)',
       'aggragate-all-subgroup-name' => 'All ${subgroup} ${office-plural}',
-      'aggrageat-all-subgroup-key' => '$(subgroup)-all-$(simplified-office-plural)',
-      'aggrageat-all-subgroup-email' => '$(subgroup)-all-$(simplified-office-plural)@$(domain)',
+      'aggragate-all-subgroup-key' => '$(subgroup)-all-$(simplified-office-plural)',
+      'aggragate-all-subgroup-email' => '$(subgroup)-all-$(simplified-office-plural)@$(domain)',
     );
   }
 
@@ -181,8 +181,8 @@ class StandardGroupPolicy implements GroupPolicy {
 
     // Put in an entry for 'all-$officename@domain'
     $allName = $this->getProperty('aggragate-all-name', $office_properties);
-    $allEmail = $this->getProperty('aggrageat-all-email', $office_properties);
-    $allKey = $this->getProperty('aggrageat-all-key', $office_properties);
+    $allEmail = $this->getProperty('aggragate-all-email', $office_properties);
+    $allKey = $this->getProperty('aggragate-all-key', $office_properties);
     $result[$allKey] = array('group-id' => $allEmail, 'group-name' => $allName, 'group-email' => $allEmail);
 
     // Also put in an entry for '$branch-officers@domain'
@@ -200,8 +200,8 @@ class StandardGroupPolicy implements GroupPolicy {
         $office_properties['subgroup'] = $subgroup;
 
         $allName = $this->getProperty('aggragate-all-subgroup-name', $office_properties);
-        $allEmail = $this->getProperty('aggrageat-all-subgroup-email', $office_properties);
-        $allKey = $this->getProperty('aggrageat-all-subgroup-key', $office_properties);
+        $allEmail = $this->getProperty('aggragate-all-subgroup-email', $office_properties);
+        $allKey = $this->getProperty('aggragate-all-subgroup-key', $office_properties);
         $result[$allKey] = array('group-id' => $allEmail, 'group-name' => $allName, 'group-email' => $allEmail);
       }
     }

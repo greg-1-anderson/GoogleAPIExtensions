@@ -39,9 +39,11 @@ west:
     $testLegacy ="
 west-webminister@westkingdom.org   anotherwebguy@hitec.com
 webminister@westkingdom.org   deputywebdude@boilerstrap.com
+webminister@mists.westkingdom.org   mistywebdude@fog.com
+other@mists.westkingdom.org   othermistydude@fog.com
 some-old-group@westkingdom.org   person1@somewhere.org,person2@somewhereelse.org";
 
-    $testMemberships = LegacyGroups::applyLegacyGroups($testMemberships, LegacyGroups::parseLegacyDreamHostGroups($testLegacy));
+    $testMemberships = LegacyGroups::applyLegacyGroups($testMemberships, LegacyGroups::parseLegacyDreamHostGroups($testLegacy), 'westkingdom.org');
 
     $expected = "
 west:
@@ -57,8 +59,24 @@ west:
         group-email: west-webminister@westkingdom.org
         alternate-addresses:
           - webminister@westkingdom.org
+mists:
+  lists:
+    webminister:
+      members:
+        - mistywebdude@fog.com
+      properties:
+        group-name: Webminister
+        alternate-addresses:
+          - webminister@mists.westkingdom.org
 _legacy:
   lists:
+    mists-other:
+      members:
+        - othermistydude@fog.com
+      properties:
+        group-name: 'Mists other'
+        alternate-addresses:
+          - other@mists.westkingdom.org
     some-old-group:
       members:
         - person1@somewhere.org

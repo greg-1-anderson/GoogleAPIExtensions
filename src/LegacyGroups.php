@@ -29,12 +29,34 @@ class LegacyGroups {
     return $legacy;
   }
 
-  static function applyLegacyGroups($memberships, $legacy) {
+  static function listAllOffices($memberships) {
+    $offices = array();
+
+    foreach ($memberships as $group => $info) {
+      if (isset($info['lists'])) {
+        foreach ($info['lists'] as $office => $officeInfo) {
+          $offices[$office] = TRUE;
+        }
+      }
+    }
+    return array_keys($offices);
+  }
+
+  static function applyLegacyGroups($memberships, $legacy, $tld) {
+    $allOffices = LegacyGroups::listAllOffices($memberships);
     foreach ($legacy as $legacyGroup => $members) {
       $matchedExisting = LegacyGroups::applyLegacyGroup($memberships, $legacyGroup, $members);
       if (!$matchedExisting) {
         $legacyOfficename = preg_replace('/@.*/', '', $legacyGroup);
-        $memberships['_legacy']['lists'][$legacyOfficename] = array(
+        $legacyDomain = preg_replace('/.*@/', '', $legacyGroup);
+        $legacySubdomain = preg_replace('/\.' . $tld . '/', '', $legacyDomain);
+        if (($legacySubdomain == $tld) || !in_array($legacyOfficename, $allOffices)) {
+          if ($legacySubdomain != $tld) {
+            $legacyOfficename = $legacySubdomain . '-' . $legacyOfficename;
+          }
+          $legacySubdomain = '_legacy';
+        }
+        $memberships[$legacySubdomain]['lists'][$legacyOfficename] = array(
           'members' => $members,
           'properties' => array(
             'group-name' => ucfirst(strtr($legacyOfficename, '-', ' ')),

@@ -53,6 +53,8 @@ class StandardGroupPolicy implements GroupPolicy {
       'aggragate-branch-officers-name' => '${branch} Officers',
       'aggragate-branch-officers-key' => '$(simplified-branch)-officers',
       'aggragate-branch-officers-email' => '$(simplified-branch)-officers@$(domain)',
+      'subdomain-aggragate-branch-officers-email' => 'officers@$(simplified-branch).$(domain)',
+      'tld-aggragate-branch-officers-email' => 'officers@$$(domain)',
       'aggragate-all-subgroup-name' => 'All ${subgroup} ${office-plural}',
       'aggragate-all-subgroup-key' => '$(subgroup)-all-$(simplified-office-plural)',
       'aggragate-all-subgroup-email' => '$(simplified-subgroup)-all-$(simplified-office-plural)@$(domain)',
@@ -191,6 +193,12 @@ class StandardGroupPolicy implements GroupPolicy {
     $officersEmail = $this->getProperty('aggragate-branch-officers-email', $office_properties);
     $officersKey = $this->getProperty('aggragate-branch-officers-key', $office_properties);
     $result[$officersKey] = array('group-id' => $officersEmail, 'group-name' => $officersName, 'group-email' => $officersEmail);
+    if ($top_level_group == $branch) {
+      $result[$officersKey]['properties']['alternate-addresses'][] = $this->getProperty('tld-aggragate-branch-officers-email', $office_properties);
+    }
+    else {
+      $result[$officersKey]['properties']['alternate-addresses'][] = $this->getProperty('subdomain-aggragate-branch-officers-email', $office_properties);
+    }
 
     // If this is not a top-level group, then put in an entry
     // for 'all-$parentage-$officename@domain' for each item

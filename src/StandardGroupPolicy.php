@@ -194,10 +194,10 @@ class StandardGroupPolicy implements GroupPolicy {
     $officersKey = $this->getProperty('aggragate-branch-officers-key', $office_properties);
     $result[$officersKey] = array('group-id' => $officersEmail, 'group-name' => $officersName, 'group-email' => $officersEmail);
     if ($top_level_group == $branch) {
-      $result[$officersKey]['properties']['alternate-addresses'][] = $this->getProperty('tld-aggragate-branch-officers-email', $office_properties);
+      $result[$officersKey]['alternate-addresses'][] = $this->getProperty('tld-aggragate-branch-officers-email', $office_properties);
     }
     else {
-      $result[$officersKey]['properties']['alternate-addresses'][] = $this->getProperty('subdomain-aggragate-branch-officers-email', $office_properties);
+      $result[$officersKey]['alternate-addresses'][] = $this->getProperty('subdomain-aggragate-branch-officers-email', $office_properties);
     }
 
     // If this is not a top-level group, then put in an entry

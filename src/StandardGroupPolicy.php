@@ -221,6 +221,24 @@ class StandardGroupPolicy implements GroupPolicy {
   }
 
   /**
+   * Given an email address, return the 'branch'
+   * (e.g. foo.baz.org returns 'foo').
+   */
+  function branchFromEmail($email) {
+    $branch = FALSE;
+    $split = explode('@', $email, 2);
+    if (count($split) > 1) {
+      $domain = $split[1];
+      $tld = $this->getDomain();
+      $branch = preg_replace("/\.$tld\$/", '', $domain);
+      if (empty($branch)) {
+        $branch = $this->getProperty('top-level-group');
+      }
+    }
+    return $branch;
+  }
+
+  /**
    * Normalize an email address.
    *
    * Addresses without a domain are assumed to be in the

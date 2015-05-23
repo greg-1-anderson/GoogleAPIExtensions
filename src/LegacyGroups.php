@@ -42,7 +42,8 @@ class LegacyGroups {
     return array_keys($offices);
   }
 
-  static function applyLegacyGroups($memberships, $legacy, $tld) {
+  static function applyLegacyGroups($memberships, $legacy, $policy) {
+    $tld = $policy->getDomain();
     $allOffices = LegacyGroups::listAllOffices($memberships);
     foreach ($legacy as $legacyGroup => $members) {
       $matchedExisting = LegacyGroups::applyLegacyGroup($memberships, $legacyGroup, $members);
@@ -63,6 +64,22 @@ class LegacyGroups {
             'alternate-addresses' => array($legacyGroup),
           ),
         );
+      }
+      // If the current domain in the $legacyGroup is a subdomain,
+      // then add all of the members of this legacy group to the
+      // group "legacy@subdomain.domain.org".
+      $branch = $policy->branchFromEmail($legacyGroup);
+      if ($policy->isSubdomain($branch) || ($branch == $policy->getProperty('top-level-group'))) {
+        if (!isset($branch, $memberships['_legacy']['lists'][$branch])) {
+          $memberships['_legacy']['lists'][$branch] = array(
+            'members' => array(),
+            'properties' => array(
+              'group-name' => ucfirst($branch) . ' Legacy Group Members',
+              'alternate-addresses' => array("legacy@$branch.$tld"),
+            ),
+          );
+        }
+        $memberships['_legacy']['lists'][$branch]['members'] = array_unique(array_merge($memberships['_legacy']['lists'][$branch]['members'], $members));
       }
     }
     return $memberships;

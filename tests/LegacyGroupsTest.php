@@ -1,6 +1,7 @@
 <?php
 
 use Westkingdom\GoogleAPIExtensions\LegacyGroups;
+use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
 
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Dumper;
@@ -43,7 +44,12 @@ webminister@mists.westkingdom.org   mistywebdude@fog.com
 other@mists.westkingdom.org   othermistydude@fog.com
 some-old-group@westkingdom.org   person1@somewhere.org,person2@somewhereelse.org";
 
-    $testMemberships = LegacyGroups::applyLegacyGroups($testMemberships, LegacyGroups::parseLegacyDreamHostGroups($testLegacy), 'westkingdom.org');
+    $properties = array(
+      'top-level-group' => 'west',
+      'subdomains' => 'mists',
+    );
+    $policy = new StandardGroupPolicy('westkingdom.org', $properties);
+    $testMemberships = LegacyGroups::applyLegacyGroups($testMemberships, LegacyGroups::parseLegacyDreamHostGroups($testLegacy), $policy);
 
     $expected = "
 west:
@@ -70,6 +76,14 @@ mists:
           - webminister@mists.westkingdom.org
 _legacy:
   lists:
+    mists:
+      members:
+        - mistywebdude@fog.com
+        - othermistydude@fog.com
+      properties:
+        group-name: 'Mists Legacy Group Members'
+        alternate-addresses:
+          - legacy@mists.westkingdom.org
     mists-other:
       members:
         - othermistydude@fog.com

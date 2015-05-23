@@ -54,11 +54,14 @@ class StandardGroupPolicy implements GroupPolicy {
       'aggragate-branch-officers-key' => '$(simplified-branch)-officers',
       'aggragate-branch-officers-email' => '$(simplified-branch)-officers@$(domain)',
       'subdomain-aggragate-branch-officers-email' => 'officers@$(simplified-branch).$(domain)',
-      'tld-aggragate-branch-officers-email' => 'officers@$$(domain)',
+      'tld-aggragate-branch-officers-email' => 'officers@$(domain)',
       'aggragate-all-subgroup-name' => 'All ${subgroup} ${office-plural}',
       'aggragate-all-subgroup-key' => '$(subgroup)-all-$(simplified-office-plural)',
       'aggragate-all-subgroup-email' => '$(simplified-subgroup)-all-$(simplified-office-plural)@$(domain)',
       'subdomain-aggragate-all-subgroup-email' => 'all-$(simplified-office-plural)@$(simplified-subgroup).$(domain)',
+      'primary-office' => FALSE,
+      'primary-office-alternate-email-principal-group' => '$(simplified-branch)@$(domain)',
+      'primary-office-alternate-email-branch-group' => '$(simplified-branch)@$(simplified-parent).$(domain)',
     );
   }
 
@@ -90,17 +93,11 @@ class StandardGroupPolicy implements GroupPolicy {
       $alternate_addresses[] = $this->getProperty('top-level-group-email', $groupProperties);
     }
     else {
-      // TODO: if we had a list of valid subdomains, e.g. sub.domain.org, then
-      // we could also test to see if $branch == sub, then create an
-      // alias 'office@sub.domain.org' for the standard 'sub-office@domain.org'.
+      // Create an alias 'office@sub.domain.org' for the standard 'sub-office@domain.org'.
       $branchIsSubdomain = $this->isSubdomain($branch, $groupProperties);
       if ($branchIsSubdomain) {
         $alternate_addresses[] = $this->getProperty('subdomain-group-email', $groupProperties);
       }
-      // TODO: if we had information about the heirarchy of branches, then
-      // we could make a subdomain-group-email alternate address
-      // 'branch-office@sub.domain.org', where 'sub' is the nearest parent
-      // branch that has a valid subdomain 'sub.domain.org'.
     }
     return $alternate_addresses;
   }
@@ -318,7 +315,6 @@ class StandardGroupPolicy implements GroupPolicy {
     }
   }
 
-
   /**
    * Generate aggragated groups
    */
@@ -364,16 +360,45 @@ class StandardGroupPolicy implements GroupPolicy {
     $result = array();
     foreach ($state as $branch => $branchInfo) {
       $result[$branch] = $this->normalizeLists($branch, $branchInfo);
-      if (array_key_exists('subgroups', $branchInfo)) {
-        $result[$branch]['subgroups'] = $branchInfo['subgroups'];
+    }
+    return $this->generatePrimaryOfficerAlternateEmail($result);
+  }
+
+  function generatePrimaryOfficerAlternateEmail($state) {
+    $state = $this->generateParentage($state);
+    $primary_office = $this->getProperty('primary-office');
+    $top_level_group = $this->getProperty('top-level-group');
+    $properties = array();
+
+    foreach ($state as $branch => $branchInfo) {
+      if (array_key_exists($primary_office, $branchInfo['lists']) && array_key_exists('parentage', $branchInfo)) {
+        $parent = $branchInfo['parentage'][0];
+        $groupProperties = $this->defaultGroupProperties($branch, $primary_office, $properties);
+        $groupProperties['parent'] = $parent;
+        $groupProperties['simplified-parent'] = $this->simplify($parent);
+
+        $alternate = FALSE;
+        if ($top_level_group == $parent) {
+          $alternate = $this->getProperty('primary-office-alternate-email-principal-group', $groupProperties);
+        }
+        elseif ($this->isSubdomain($parent, $groupProperties)) {
+          $alternate = $this->getProperty('primary-office-alternate-email-branch-group', $groupProperties);
+        }
+        if ($alternate) {
+          $state[$branch]['lists'][$primary_office]['properties']['alternate-addresses'][] = $alternate;
+        }
       }
     }
-    return $result;
+
+    return $state;
   }
 
   function normalizeLists($branch, $listsAndAliases) {
     // First, normalize the offices data
     $offices = array('lists' => array());
+    if (array_key_exists('subgroups', $listsAndAliases)) {
+      $offices['subgroups'] = $listsAndAliases['subgroups'];
+    }
     if (array_key_exists('lists', $listsAndAliases)) {
       $offices['lists'] = $this->normalizeGroupsData($branch, $listsAndAliases['lists']);
     }

@@ -28,6 +28,7 @@ west:
 
     $properties = array(
       'top-level-group' => 'north',
+      'primary-office' => 'president',
       'subdomains' => 'fogs,geese,wolves,lightwoods',
     );
     $this->policy = new StandardGroupPolicy('testdomain.org', $properties);
@@ -287,6 +288,7 @@ lightwoods:
         group-name: 'Lightwoods President'
         alternate-addresses:
           - president@lightwoods.testdomain.org
+          - lightwoods@fogs.testdomain.org
 gustyplains:
   lists:
     president:
@@ -294,6 +296,8 @@ gustyplains:
         group-email: gustyplains-president@testdomain.org
         group-id: gustyplains-president@testdomain.org
         group-name: 'Gustyplains President'
+        alternate-addresses:
+          - gustyplains@geese.testdomain.org
 coldholm:
   lists:
     president:
@@ -301,13 +305,17 @@ coldholm:
         group-email: coldholm-president@testdomain.org
         group-id: coldholm-president@testdomain.org
         group-name: 'Coldholm President'
+        alternate-addresses:
+          - coldholm@wolves.testdomain.org
 seamountain:
   lists:
     president:
       properties:
         group-email: seamountain-president@testdomain.org
         group-id: seamountain-president@testdomain.org
-        group-name: 'Seamountain President'";
+        group-name: 'Seamountain President'
+        alternate-addresses:
+          - seamountain@lightwoods.testdomain.org";
     $this->assertYamlEquals(trim($expected), $reducedData);
 
     $data = $this->policy->generateParentage($data);

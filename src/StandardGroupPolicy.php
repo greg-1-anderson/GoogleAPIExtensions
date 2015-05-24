@@ -2,6 +2,9 @@
 
 namespace Westkingdom\GoogleAPIExtensions;
 
+use Symfony\Component\Yaml\Yaml;
+use Symfony\Component\Yaml\Dumper;
+
 /**
  * Use this groups controller with Westkingdom\GoogleAPIExtensions\Groups
  * to update groups and group memberships directly in Google Apps.
@@ -47,6 +50,7 @@ class StandardGroupPolicy implements GroupPolicy {
       'top-level-group' => preg_replace('/\.[a-z]*$/', '', $domain),
       'top-level-group-email' => '$(simplified-office)@$(domain)',
       'subdomain-group-email' => '$(simplified-office)@$(simplified-branch).$(domain)',
+      'aggragated-groups' => '',
       'aggragate-all-name' => 'All ${office-plural}',
       'aggragate-all-key' => 'all-$(simplified-office-plural)',
       'aggragate-all-email' => 'all-$(simplified-office-plural)@$(domain)',
@@ -59,7 +63,7 @@ class StandardGroupPolicy implements GroupPolicy {
       'aggragate-all-subgroup-key' => '$(subgroup)-all-$(simplified-office-plural)',
       'aggragate-all-subgroup-email' => '$(simplified-subgroup)-all-$(simplified-office-plural)@$(domain)',
       'subdomain-aggragate-all-subgroup-email' => 'all-$(simplified-office-plural)@$(simplified-subgroup).$(domain)',
-      'primary-office' => FALSE,
+      'primary-office' => '',
       'primary-office-alternate-email-principal-group' => '$(simplified-branch)@$(domain)',
       'primary-office-alternate-email-branch-group' => '$(simplified-branch)@$(simplified-parent).$(domain)',
     );
@@ -337,6 +341,7 @@ class StandardGroupPolicy implements GroupPolicy {
    * Generate aggragated groups
    */
   function generateAggregatedGroups($memberships) {
+    $tld = $this->getDomain();
     $aggregatedGroups = array();
     // Generate the aggregated group information
     foreach ($memberships as $branch => $branchinfo) {
@@ -347,6 +352,24 @@ class StandardGroupPolicy implements GroupPolicy {
           $aggragatedLists = $this->getAggregatedGroups($branch, $office, $officeData['properties'], $parentage);
           foreach ($aggragatedLists as $aggregateName => $aggregateGroupInfo) {
             $this->addAggregateGroupMember($aggregatedGroups, $branch, $office, $aggregateName, $aggregateGroupInfo);
+          }
+        }
+        // Look up the rules for additional aggregated groups for the branch.
+        $group_properties = $this->defaultGroupProperties($branch, 'aggregated');
+        $aggragated_groups_yaml = $this->getProperty('aggregated-groups', $group_properties);
+        $aggragated_groups = Yaml::parse(trim($aggragated_groups_yaml));
+        if (is_array($aggragated_groups)) {
+          foreach ($aggragated_groups as $group => $group_info) {
+            foreach ($group_info['members'] as $member) {
+              if (array_key_exists($member, $branchinfo['lists'])) {
+                $emailAddress = "$member@${branch}.$tld";
+                $aggregatedGroupName = $branch . '-' . $group;
+                $aggregatedGroupProperties = array(
+                  'alternate-addresses' => array("${group}@$branch.$tld"),
+                ) + $group_info['properties'];
+                $this->addAggregateGroupEmailAddress($aggregatedGroups, $emailAddress, $aggregatedGroupName, $aggregatedGroupProperties);
+              }
+            }
           }
         }
       }
@@ -366,6 +389,10 @@ class StandardGroupPolicy implements GroupPolicy {
    */
   protected function addAggregateGroupMember(&$aggregatedGroups, $branch, $office, $aggregatedGroupName, $aggregatedGroupProperties) {
     $emailAddress = $this->getGroupEmail($branch, $office);
+    return $this->addAggregateGroupEmailAddress($aggregatedGroups, $emailAddress, $aggregatedGroupName, $aggregatedGroupProperties);
+  }
+
+  protected function addAggregateGroupEmailAddress(&$aggregatedGroups, $emailAddress, $aggregatedGroupName, $aggregatedGroupProperties) {
     if (!isset($aggregatedGroups[$aggregatedGroupName])) {
       $aggregatedGroups[$aggregatedGroupName] = array(
         'properties' => $aggregatedGroupProperties,

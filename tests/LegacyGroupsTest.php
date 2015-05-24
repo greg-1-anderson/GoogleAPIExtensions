@@ -46,7 +46,7 @@ some-old-group@westkingdom.org   person1@somewhere.org,person2@somewhereelse.org
 
     $properties = array(
       'top-level-group' => 'west',
-      'subdomains' => 'mists',
+      'subdomains' => 'mists'
     );
     $policy = new StandardGroupPolicy('westkingdom.org', $properties);
     $testMemberships = LegacyGroups::applyLegacyGroups($testMemberships, LegacyGroups::parseLegacyDreamHostGroups($testLegacy), $policy);

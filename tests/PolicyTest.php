@@ -30,6 +30,13 @@ west:
       'top-level-group' => 'north',
       'primary-office' => 'president',
       'subdomains' => 'fogs,geese,wolves,lightwoods',
+      'aggregated-groups' => "
+lesseroffices:
+  members:
+    - vice-president
+    - secretary
+  properties:
+    group-name: '\${branch} Lesser Officers'",
     );
     $this->policy = new StandardGroupPolicy('testdomain.org', $properties);
   }
@@ -381,6 +388,61 @@ lightwoods-all-presidents:
   members:
     - lightwoods-president@testdomain.org
     - seamountain-president@testdomain.org";
+
+    $this->assertYamlEquals(trim($expected), $result);
+  }
+
+
+  public function testCustomAggregatedGroups() {
+    $data = Yaml::parse("
+north:
+  lists:
+    president:
+      - bill@testdomain.org
+    vice-president:
+      members:
+        - walter@testdomain.org
+      properties:
+        alternate-addresses:
+          - vice@testdomain.org
+    secretary:
+      - george@testdomain.org
+fogs:
+  lists:
+    president:
+      - frank@testdomain.org");
+
+    $normalized = $this->policy->normalize($data);
+    $result = $this->policy->generateAggregatedGroups($normalized);
+
+    $expected = "
+all-presidents:
+  properties:
+    group-id: all-presidents@testdomain.org
+    group-name: 'All Presidents'
+    group-email: all-presidents@testdomain.org
+  members:
+    - north-president@testdomain.org
+    - fogs-president@testdomain.org
+north-officers:
+  properties:
+    group-id: north-officers@testdomain.org
+    group-name: 'North Officers'
+    group-email: north-officers@testdomain.org
+    alternate-addresses:
+      - officers@testdomain.org
+  members:
+    - north-president@testdomain.org
+    - north-vicepresident@testdomain.org
+    - north-secretary@testdomain.org
+north-lesseroffices:
+  properties:
+    alternate-addresses:
+      - lesseroffices@north.testdomain.org
+    group-name: 'North Lesser Officers'
+  members:
+    - vice-president@north.testdomain.org
+    - secretary@north.testdomain.org";
 
     $this->assertYamlEquals(trim($expected), $result);
   }

@@ -46,26 +46,26 @@ class StandardGroupPolicy implements GroupPolicy {
       'domain' => $domain,
       'subdomains' => '',
       'group-name' => '${branch} ${office}',
-      'group-email' => '$(simplified-branch)-$(simplified-office)@$(domain)',
+      'group-email' => '$(branch)-$(office)@$(domain)',
       'top-level-group' => preg_replace('/\.[a-z]*$/', '', $domain),
-      'top-level-group-email' => '$(simplified-office)@$(domain)',
-      'subdomain-group-email' => '$(simplified-office)@$(simplified-branch).$(domain)',
+      'top-level-group-email' => '$(office)@$(domain)',
+      'subdomain-group-email' => '$(office)@$(branch).$(domain)',
       'aggragated-groups' => '',
       'aggragate-all-name' => 'All ${office-plural}',
-      'aggragate-all-key' => 'all-$(simplified-office-plural)',
-      'aggragate-all-email' => 'all-$(simplified-office-plural)@$(domain)',
+      'aggragate-all-key' => 'all-$(office-plural)',
+      'aggragate-all-email' => 'all-$(office-plural)@$(domain)',
       'aggragate-branch-officers-name' => '${branch} Officers',
-      'aggragate-branch-officers-key' => '$(simplified-branch)-officers',
-      'aggragate-branch-officers-email' => '$(simplified-branch)-officers@$(domain)',
-      'subdomain-aggragate-branch-officers-email' => 'officers@$(simplified-branch).$(domain)',
+      'aggragate-branch-officers-key' => '$(branch)-officers',
+      'aggragate-branch-officers-email' => '$(branch)-officers@$(domain)',
+      'subdomain-aggragate-branch-officers-email' => 'officers@$(branch).$(domain)',
       'tld-aggragate-branch-officers-email' => 'officers@$(domain)',
       'aggragate-all-subgroup-name' => 'All ${subgroup} ${office-plural}',
-      'aggragate-all-subgroup-key' => '$(subgroup)-all-$(simplified-office-plural)',
-      'aggragate-all-subgroup-email' => '$(simplified-subgroup)-all-$(simplified-office-plural)@$(domain)',
-      'subdomain-aggragate-all-subgroup-email' => 'all-$(simplified-office-plural)@$(simplified-subgroup).$(domain)',
+      'aggragate-all-subgroup-key' => '$(subgroup)-all-$(office-plural)',
+      'aggragate-all-subgroup-email' => '$(subgroup)-all-$(office-plural)@$(domain)',
+      'subdomain-aggragate-all-subgroup-email' => 'all-$(office-plural)@$(subgroup).$(domain)',
       'primary-office' => '',
-      'primary-office-alternate-email-principal-group' => '$(simplified-branch)@$(domain)',
-      'primary-office-alternate-email-branch-group' => '$(simplified-branch)@$(simplified-parent).$(domain)',
+      'primary-office-alternate-email-principal-group' => '$(branch)@$(domain)',
+      'primary-office-alternate-email-branch-group' => '$(branch)@$(parent).$(domain)',
     );
   }
 
@@ -78,7 +78,7 @@ class StandardGroupPolicy implements GroupPolicy {
     if ($id) {
       return $id;
     }
-    return $this->getProperty('group-email', $this->defaultGroupProperties($branch, $officename, $properties));
+    return $this->getSimplifiedProperty('group-email', $this->defaultGroupProperties($branch, $officename, $properties));
   }
 
   /**
@@ -86,7 +86,7 @@ class StandardGroupPolicy implements GroupPolicy {
    * email address is to use branch-office@domain.
    */
   function getGroupEmail($branch, $officename, $properties = array()) {
-    return $this->getProperty('group-email', $this->defaultGroupProperties($branch, $officename, $properties));
+    return $this->getSimplifiedProperty('group-email', $this->defaultGroupProperties($branch, $officename, $properties));
   }
 
   function getGroupDefaultAlternateAddresses($branch, $officename, $properties = array()) {
@@ -94,13 +94,13 @@ class StandardGroupPolicy implements GroupPolicy {
     $alternate_addresses = array();
     $top_level_group = $this->getProperty('top-level-group', $groupProperties);
     if ($branch == $top_level_group) {
-      $alternate_addresses[] = $this->getProperty('top-level-group-email', $groupProperties);
+      $alternate_addresses[] = $this->getSimplifiedProperty('top-level-group-email', $groupProperties);
     }
     else {
       // Create an alias 'office@sub.domain.org' for the standard 'sub-office@domain.org'.
       $branchIsSubdomain = $this->isSubdomain($branch, $groupProperties);
       if ($branchIsSubdomain) {
-        $alternate_addresses[] = $this->getProperty('subdomain-group-email', $groupProperties);
+        $alternate_addresses[] = $this->getSimplifiedProperty('subdomain-group-email', $groupProperties);
       }
     }
     return $alternate_addresses;
@@ -111,15 +111,6 @@ class StandardGroupPolicy implements GroupPolicy {
       'branch' => $branch,
       'office' => $officename,
       'office-plural' => $this->plural($officename),
-    );
-
-    $result += array(
-      'simplified-branch' => $this->simplifyBranchName($result['branch']),
-      'simplified-office' => $this->simplifyOfficeName($result['office']),
-    );
-
-    $result += array(
-      'simplified-office-plural' => $this->simplifyOfficeName($this->plural($result['simplified-office'])),
     );
 
     return $result;
@@ -185,20 +176,20 @@ class StandardGroupPolicy implements GroupPolicy {
 
     // Put in an entry for 'all-$officename@domain'
     $allName = $this->getProperty('aggragate-all-name', $office_properties);
-    $allEmail = $this->getProperty('aggragate-all-email', $office_properties);
-    $allKey = $this->getProperty('aggragate-all-key', $office_properties);
+    $allEmail = $this->getSimplifiedProperty('aggragate-all-email', $office_properties);
+    $allKey = $this->getSimplifiedProperty('aggragate-all-key', $office_properties);
     $result[$allKey] = array('group-id' => $allEmail, 'group-name' => $allName, 'group-email' => $allEmail);
 
     // Also put in an entry for '$branch-officers@domain'
     $officersName = $this->getProperty('aggragate-branch-officers-name', $office_properties);
-    $officersEmail = $this->getProperty('aggragate-branch-officers-email', $office_properties);
-    $officersKey = $this->getProperty('aggragate-branch-officers-key', $office_properties);
+    $officersEmail = $this->getSimplifiedProperty('aggragate-branch-officers-email', $office_properties);
+    $officersKey = $this->getSimplifiedProperty('aggragate-branch-officers-key', $office_properties);
     $result[$officersKey] = array('group-id' => $officersEmail, 'group-name' => $officersName, 'group-email' => $officersEmail);
     if ($top_level_group == $branch) {
-      $result[$officersKey]['alternate-addresses'][] = $this->getProperty('tld-aggragate-branch-officers-email', $office_properties);
+      $result[$officersKey]['alternate-addresses'][] = $this->getSimplifiedProperty('tld-aggragate-branch-officers-email', $office_properties);
     }
     else {
-      $result[$officersKey]['alternate-addresses'][] = $this->getProperty('subdomain-aggragate-branch-officers-email', $office_properties);
+      $result[$officersKey]['alternate-addresses'][] = $this->getSimplifiedProperty('subdomain-aggragate-branch-officers-email', $office_properties);
     }
 
     // If this is not a top-level group, then put in an entry
@@ -211,12 +202,12 @@ class StandardGroupPolicy implements GroupPolicy {
         $office_properties['simplified-subgroup'] = $this->simplify($subgroup);
 
         $allName = $this->getProperty('aggragate-all-subgroup-name', $office_properties);
-        $allEmail = $this->getProperty('aggragate-all-subgroup-email', $office_properties);
-        $allKey = $this->getProperty('aggragate-all-subgroup-key', $office_properties);
+        $allEmail = $this->getSimplifiedProperty('aggragate-all-subgroup-email', $office_properties);
+        $allKey = $this->getSimplifiedProperty('aggragate-all-subgroup-key', $office_properties);
         $result[$allKey] = array('group-id' => $allEmail, 'group-name' => $allName, 'group-email' => $allEmail);
         $subgroupIsSubdomain = $this->isSubdomain($subgroup, $office_properties);
         if ($subgroupIsSubdomain) {
-          $allSubdomainEmail = $this->getProperty('subdomain-aggragate-all-subgroup-email', $office_properties);
+          $allSubdomainEmail = $this->getSimplifiedProperty('subdomain-aggragate-all-subgroup-email', $office_properties);
           $result[$allKey]['properties']['alternate-addresses'][] = $allSubdomainEmail;
         }
       }
@@ -257,26 +248,17 @@ class StandardGroupPolicy implements GroupPolicy {
     return strtolower($email);
   }
 
-  /**
-   * Simplify a branch name, e.g. for inclusion in an email address
-   */
-  function simplifyBranchName($branch) {
-    return $this->simplify($branch);
-  }
-
-  /**
-   * Simplify an office name, e.g. for inclusion in an email address
-   */
-  function simplifyOfficeName($office) {
-    return $this->simplify($office);
-  }
-
   function simplify($name) {
-    return preg_replace('/[^a-z0-9]/', '', strtolower($name));
+    return preg_replace('/[^a-z0-9.]/', '', strtolower($name));
   }
 
   function availableDefaults() {
     return array_keys($this->defaults);
+  }
+
+  function getSimplifiedProperty($propertyId, $properties = array()) {
+    $value = $this->getPropertyValue($propertyId, $properties);
+    return $this->applyTemplate($value, $properties, TRUE);
   }
 
   function getProperty($propertyId, $properties = array()) {
@@ -294,7 +276,7 @@ class StandardGroupPolicy implements GroupPolicy {
     return NULL;
   }
 
-  protected function applyTemplate($template, $properties) {
+  protected function applyTemplate($template, $properties, $simplify = FALSE) {
     if (!$template) {
       return NULL;
     }
@@ -306,6 +288,9 @@ class StandardGroupPolicy implements GroupPolicy {
       $replacement = $this->getPropertyValue($replacementPropertyId, $properties);
       if (!isset($replacement)) {
         $replacement = '';
+      }
+      if ($simplify) {
+        $replacement = $this->simplify($replacement);
       }
       if ($uppercase) {
         $replacement = ucfirst($replacement);
@@ -424,10 +409,10 @@ class StandardGroupPolicy implements GroupPolicy {
 
         $alternate = FALSE;
         if ($top_level_group == $parent) {
-          $alternate = $this->getProperty('primary-office-alternate-email-principal-group', $groupProperties);
+          $alternate = $this->getSimplifiedProperty('primary-office-alternate-email-principal-group', $groupProperties);
         }
         elseif ($this->isSubdomain($parent, $groupProperties)) {
-          $alternate = $this->getProperty('primary-office-alternate-email-branch-group', $groupProperties);
+          $alternate = $this->getSimplifiedProperty('primary-office-alternate-email-branch-group', $groupProperties);
         }
         if ($alternate) {
           $state[$branch]['lists'][$primary_office]['properties']['alternate-addresses'][] = $alternate;

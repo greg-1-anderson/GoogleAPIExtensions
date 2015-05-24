@@ -37,16 +37,6 @@ interface GroupPolicy {
   function getDomain();
 
   /**
-   * Simplify a branch name, e.g. for inclusion in an email address
-   */
-  function simplifyBranchName($branch);
-
-  /**
-   * Simplify an office name, e.g. for inclusion in an email address
-   */
-  function simplifyOfficeName($office);
-
-  /**
    * Normalize an email address
    */
   function normalizeEmail($email);

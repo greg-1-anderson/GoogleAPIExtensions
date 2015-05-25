@@ -66,6 +66,8 @@ class StandardGroupPolicy implements GroupPolicy {
       'primary-office' => '',
       'primary-office-alternate-email-principal-group' => '$(branch)@$(domain)',
       'primary-office-alternate-email-branch-group' => '$(branch)@$(parent).$(domain)',
+      'member-email' => '$(!member)@$(branch).$(domain)',
+      'aggregate-group-email' => '$(aggregate)@$(branch).$(domain)',
     );
   }
 
@@ -281,16 +283,23 @@ class StandardGroupPolicy implements GroupPolicy {
       return NULL;
     }
     $result = $template;
-    preg_match_all('/\$([{(])([a-z-]*)[})]/', $template, $matches, PREG_SET_ORDER);
+    preg_match_all('/\$([{(])(!*[a-z-]*)[})]/', $template, $matches, PREG_SET_ORDER);
     foreach ($matches as $match) {
       $replacementPropertyId = $match[2];
       $uppercase = $match[1] == '{';
+      $raw = FALSE;
+      if ($replacementPropertyId[0] == '!') {
+        $replacementPropertyId = substr($replacementPropertyId, 1);
+        $raw = TRUE;
+      }
       $replacement = $this->getPropertyValue($replacementPropertyId, $properties);
       if (!isset($replacement)) {
         $replacement = '';
       }
-      if ($simplify) {
-        $replacement = $this->simplify($replacement);
+      if (!$raw) {
+        if ($simplify) {
+          $replacement = $this->simplify($replacement);
+        }
       }
       if ($uppercase) {
         $replacement = ucfirst($replacement);
@@ -347,12 +356,21 @@ class StandardGroupPolicy implements GroupPolicy {
           foreach ($aggragated_groups as $group => $group_info) {
             foreach ($group_info['members'] as $member) {
               if (array_key_exists($member, $branchinfo['lists'])) {
-                $emailAddress = "$member@${branch}.$tld";
+                $groupProperties = $this->defaultGroupProperties($branch, $group,
+                  array(
+                    'member' => $member,
+                    'aggregate' => $group,
+                  )
+                );
+
+                $memberAddress = $this->getSimplifiedProperty('member-email', $groupProperties);
+                $aggregateGroupAddress = $this->getSimplifiedProperty('aggregate-group-email', $groupProperties);
+
                 $aggregatedGroupName = $branch . '-' . $group;
                 $aggregatedGroupProperties = array(
-                  'alternate-addresses' => array("${group}@$branch.$tld"),
+                  'alternate-addresses' => array($aggregateGroupAddress),
                 ) + $group_info['properties'];
-                $this->addAggregateGroupEmailAddress($aggregatedGroups, $emailAddress, $aggregatedGroupName, $aggregatedGroupProperties);
+                $this->addAggregateGroupEmailAddress($aggregatedGroups, $memberAddress, $aggregatedGroupName, $aggregatedGroupProperties);
               }
             }
           }

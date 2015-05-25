@@ -66,7 +66,7 @@ class StandardGroupPolicy implements GroupPolicy {
       'primary-office' => '',
       'primary-office-alternate-email-principal-group' => '$(branch)@$(domain)',
       'primary-office-alternate-email-branch-group' => '$(branch)@$(parent).$(domain)',
-      'member-email' => '$(!member)@$(branch).$(domain)',
+      'member-email' => '$(branch)-$(member)@$(domain)',
       'aggregate-group-email' => '$(aggregate)@$(branch).$(domain)',
     );
   }

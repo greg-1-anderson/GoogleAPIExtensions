@@ -441,8 +441,8 @@ north-lesseroffices:
       - lesseroffices@north.testdomain.org
     group-name: 'North Lesser Officers'
   members:
-    - vice-president@north.testdomain.org
-    - secretary@north.testdomain.org";
+    - north-vicepresident@testdomain.org
+    - north-secretary@testdomain.org";
 
     $this->assertYamlEquals(trim($expected), $result);
   }

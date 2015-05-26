@@ -54,6 +54,7 @@ north:
       properties:
         alternate-addresses:
           - vice@testdomain.org
+          - vicepresidents
     secretary:
       - george@testdomain.org
 fogs:
@@ -82,6 +83,7 @@ north:
         alternate-addresses:
           - vice@testdomain.org
           - vicepresident@testdomain.org
+          - vicepresidents@testdomain.org
         group-email: north-vicepresident@testdomain.org
         group-id: north-vicepresident@testdomain.org
         group-name: 'North Vice-president'
@@ -408,6 +410,7 @@ north:
       properties:
         alternate-addresses:
           - vice@testdomain.org
+          - vicepresidents
     secretary:
       - george@testdomain.org
     gophers:
@@ -417,6 +420,8 @@ fogs:
   lists:
     president:
       - frank@testdomain.org
+    vicepresident:
+      - richard@testdomain.org
     gophers:
       - intern3@testdomain.org
       - intern4@testdomain.org");
@@ -448,6 +453,16 @@ north-officers:
     - north-vicepresident@testdomain.org
     - north-secretary@testdomain.org
     - north-gophers@testdomain.org
+all-vicepresidents:
+  properties:
+    group-id: all-vicepresidents@testdomain.org
+    group-name: 'All Vice-presidents'
+    group-email: all-vicepresidents@testdomain.org
+    alternate-addresses:
+      - vicepresidents@testdomain.org
+  members:
+    - north-vicepresident@testdomain.org
+    - fogs-vicepresident@testdomain.org
 all-gophers:
   properties:
     group-id: all-gophers@testdomain.org
@@ -467,6 +482,7 @@ fogs-officers:
       - officers@fogs.testdomain.org
   members:
     - fogs-president@testdomain.org
+    - fogs-vicepresident@testdomain.org
     - fogs-gophers@testdomain.org
 north-lesseroffices:
   properties:
@@ -515,6 +531,14 @@ north-officers:
     - north-vicepresident@testdomain.org
     - north-secretary@testdomain.org
     - north-gophers@testdomain.org
+all-vicepresidents:
+  properties:
+    group-id: all-vicepresidents@testdomain.org
+    group-name: 'All Vice-presidents'
+    group-email: all-vicepresidents@testdomain.org
+  members:
+    - north-vicepresident@testdomain.org
+    - fogs-vicepresident@testdomain.org
 all-gophers:
   properties:
     group-id: all-gophers@testdomain.org
@@ -532,6 +556,7 @@ fogs-officers:
       - officers@fogs.testdomain.org
   members:
     - fogs-president@testdomain.org
+    - fogs-vicepresident@testdomain.org
     - fogs-gophers@testdomain.org
 north-lesseroffices:
   properties:

@@ -35,6 +35,7 @@ lesseroffices:
   members:
     - vice-president
     - secretary
+    - gophers
   properties:
     group-name: '\${branch} Lesser Officers'",
     );
@@ -334,6 +335,8 @@ all-presidents:
     group-id: all-presidents@testdomain.org
     group-name: 'All Presidents'
     group-email: all-presidents@testdomain.org
+    alternate-addresses:
+      - presidents@testdomain.org
   members:
     - north-president@testdomain.org
     - fogs-president@testdomain.org
@@ -348,9 +351,9 @@ fogs-all-presidents:
     group-id: fogs-all-presidents@testdomain.org
     group-name: 'All Fogs Presidents'
     group-email: fogs-all-presidents@testdomain.org
-    properties:
-      alternate-addresses:
-        - all-presidents@fogs.testdomain.org
+    alternate-addresses:
+      - all-presidents@fogs.testdomain.org
+      - presidents@fogs.testdomain.org
   members:
     - fogs-president@testdomain.org
     - lightwoods-president@testdomain.org
@@ -360,9 +363,9 @@ geese-all-presidents:
     group-id: geese-all-presidents@testdomain.org
     group-name: 'All Geese Presidents'
     group-email: geese-all-presidents@testdomain.org
-    properties:
-      alternate-addresses:
-        - all-presidents@geese.testdomain.org
+    alternate-addresses:
+      - all-presidents@geese.testdomain.org
+      - presidents@geese.testdomain.org
   members:
     - geese-president@testdomain.org
     - gustyplains-president@testdomain.org
@@ -371,9 +374,9 @@ wolves-all-presidents:
     group-id: wolves-all-presidents@testdomain.org
     group-name: 'All Wolves Presidents'
     group-email: wolves-all-presidents@testdomain.org
-    properties:
-      alternate-addresses:
-        - all-presidents@wolves.testdomain.org
+    alternate-addresses:
+      - all-presidents@wolves.testdomain.org
+      - presidents@wolves.testdomain.org
   members:
     - wolves-president@testdomain.org
     - coldholm-president@testdomain.org
@@ -382,9 +385,9 @@ lightwoods-all-presidents:
     group-id: lightwoods-all-presidents@testdomain.org
     group-name: 'All Lightwoods Presidents'
     group-email: lightwoods-all-presidents@testdomain.org
-    properties:
-      alternate-addresses:
-        - all-presidents@lightwoods.testdomain.org
+    alternate-addresses:
+      - all-presidents@lightwoods.testdomain.org
+      - presidents@lightwoods.testdomain.org
   members:
     - lightwoods-president@testdomain.org
     - seamountain-president@testdomain.org";
@@ -407,12 +410,19 @@ north:
           - vice@testdomain.org
     secretary:
       - george@testdomain.org
+    gophers:
+      - intern1@testdomain.org
+      - intern2@testdomain.org
 fogs:
   lists:
     president:
-      - frank@testdomain.org");
+      - frank@testdomain.org
+    gophers:
+      - intern3@testdomain.org
+      - intern4@testdomain.org");
 
     $normalized = $this->policy->normalize($data);
+
     $result = $this->policy->generateAggregatedGroups($normalized);
 
     $expected = "
@@ -421,6 +431,8 @@ all-presidents:
     group-id: all-presidents@testdomain.org
     group-name: 'All Presidents'
     group-email: all-presidents@testdomain.org
+    alternate-addresses:
+      - presidents@testdomain.org
   members:
     - north-president@testdomain.org
     - fogs-president@testdomain.org
@@ -435,6 +447,27 @@ north-officers:
     - north-president@testdomain.org
     - north-vicepresident@testdomain.org
     - north-secretary@testdomain.org
+    - north-gophers@testdomain.org
+all-gophers:
+  properties:
+    group-id: all-gophers@testdomain.org
+    group-name: 'All Gophers'
+    group-email: all-gophers@testdomain.org
+    alternate-addresses:
+      - gophers@testdomain.org
+  members:
+    - north-gophers@testdomain.org
+    - fogs-gophers@testdomain.org
+fogs-officers:
+  properties:
+    group-id: fogs-officers@testdomain.org
+    group-name: 'Fogs Officers'
+    group-email: fogs-officers@testdomain.org
+    alternate-addresses:
+      - officers@fogs.testdomain.org
+  members:
+    - fogs-president@testdomain.org
+    - fogs-gophers@testdomain.org
 north-lesseroffices:
   properties:
     alternate-addresses:
@@ -442,9 +475,83 @@ north-lesseroffices:
     group-name: 'North Lesser Officers'
   members:
     - north-vicepresident@testdomain.org
-    - north-secretary@testdomain.org";
+    - north-secretary@testdomain.org
+    - north-gophers@testdomain.org
+fogs-lesseroffices:
+  properties:
+    alternate-addresses:
+      - lesseroffices@fogs.testdomain.org
+    group-name: 'Fogs Lesser Officers'
+  members:
+    - fogs-gophers@testdomain.org";
 
     $this->assertYamlEquals(trim($expected), $result);
+
+    $masterDirectory = $this->policy->generateMasterDirectory($normalized);
+
+    // $this->assertEquals("", var_export($masterDirectory, TRUE));
+    $this->policy->removeDuplicateAlternates($result, $masterDirectory);
+
+    $expectedAfterRemoval = "
+all-presidents:
+  properties:
+    group-id: all-presidents@testdomain.org
+    group-name: 'All Presidents'
+    group-email: all-presidents@testdomain.org
+    alternate-addresses:
+      - presidents@testdomain.org
+  members:
+    - north-president@testdomain.org
+    - fogs-president@testdomain.org
+north-officers:
+  properties:
+    group-id: north-officers@testdomain.org
+    group-name: 'North Officers'
+    group-email: north-officers@testdomain.org
+    alternate-addresses:
+      - officers@testdomain.org
+  members:
+    - north-president@testdomain.org
+    - north-vicepresident@testdomain.org
+    - north-secretary@testdomain.org
+    - north-gophers@testdomain.org
+all-gophers:
+  properties:
+    group-id: all-gophers@testdomain.org
+    group-name: 'All Gophers'
+    group-email: all-gophers@testdomain.org
+  members:
+    - north-gophers@testdomain.org
+    - fogs-gophers@testdomain.org
+fogs-officers:
+  properties:
+    group-id: fogs-officers@testdomain.org
+    group-name: 'Fogs Officers'
+    group-email: fogs-officers@testdomain.org
+    alternate-addresses:
+      - officers@fogs.testdomain.org
+  members:
+    - fogs-president@testdomain.org
+    - fogs-gophers@testdomain.org
+north-lesseroffices:
+  properties:
+    alternate-addresses:
+      - lesseroffices@north.testdomain.org
+    group-name: 'North Lesser Officers'
+  members:
+    - north-vicepresident@testdomain.org
+    - north-secretary@testdomain.org
+    - north-gophers@testdomain.org
+fogs-lesseroffices:
+  properties:
+    alternate-addresses:
+      - lesseroffices@fogs.testdomain.org
+    group-name: 'Fogs Lesser Officers'
+  members:
+    - fogs-gophers@testdomain.org";
+
+    $this->assertYamlEquals(trim($expectedAfterRemoval), $result);
+
   }
 
   public function assertYamlEquals($expected, $data) {

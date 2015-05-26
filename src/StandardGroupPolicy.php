@@ -54,6 +54,7 @@ class StandardGroupPolicy implements GroupPolicy {
       'aggragate-all-name' => 'All ${office-plural}',
       'aggragate-all-key' => 'all-$(office-plural)',
       'aggragate-all-email' => 'all-$(office-plural)@$(domain)',
+      'aggragate-all-alternate-email' => '$(office-plural)@$(domain)',
       'aggragate-branch-officers-name' => '${branch} Officers',
       'aggragate-branch-officers-key' => '$(branch)-officers',
       'aggragate-branch-officers-email' => '$(branch)-officers@$(domain)',
@@ -63,6 +64,7 @@ class StandardGroupPolicy implements GroupPolicy {
       'aggragate-all-subgroup-key' => '$(subgroup)-all-$(office-plural)',
       'aggragate-all-subgroup-email' => '$(subgroup)-all-$(office-plural)@$(domain)',
       'subdomain-aggragate-all-subgroup-email' => 'all-$(office-plural)@$(subgroup).$(domain)',
+      'subdomain-aggragate-all-subgroup-alternate-email' => '$(office-plural)@$(subgroup).$(domain)',
       'primary-office' => '',
       'primary-office-alternate-email-principal-group' => '$(branch)@$(domain)',
       'primary-office-alternate-email-branch-group' => '$(branch)@$(parent).$(domain)',
@@ -174,6 +176,7 @@ class StandardGroupPolicy implements GroupPolicy {
   function getAggregatedGroups($branch, $officename, $properties = array(), $parentage = array()) {
     $office_properties = $this->defaultGroupProperties($branch, $officename, $properties);
     $top_level_group = $this->getProperty('top-level-group', $office_properties);
+    $alireadyPlural = ($this->plural($officename) == $officename);
     $result = array();
 
     // Put in an entry for 'all-$officename@domain'
@@ -181,6 +184,8 @@ class StandardGroupPolicy implements GroupPolicy {
     $allEmail = $this->getSimplifiedProperty('aggragate-all-email', $office_properties);
     $allKey = $this->getSimplifiedProperty('aggragate-all-key', $office_properties);
     $result[$allKey] = array('group-id' => $allEmail, 'group-name' => $allName, 'group-email' => $allEmail);
+    $alternateAllEmail = $this->getSimplifiedProperty('aggragate-all-alternate-email', $office_properties);
+    $result[$allKey]['alternate-addresses'][] = $alternateAllEmail;
 
     // Also put in an entry for '$branch-officers@domain'
     $officersName = $this->getProperty('aggragate-branch-officers-name', $office_properties);
@@ -210,7 +215,10 @@ class StandardGroupPolicy implements GroupPolicy {
         $subgroupIsSubdomain = $this->isSubdomain($subgroup, $office_properties);
         if ($subgroupIsSubdomain) {
           $allSubdomainEmail = $this->getSimplifiedProperty('subdomain-aggragate-all-subgroup-email', $office_properties);
-          $result[$allKey]['properties']['alternate-addresses'][] = $allSubdomainEmail;
+          $result[$allKey]['alternate-addresses'][] = $allSubdomainEmail;
+
+          $allSubdomainAlternateEmail = $this->getSimplifiedProperty('subdomain-aggragate-all-subgroup-alternate-email', $office_properties);
+          $result[$allKey]['alternate-addresses'][] = $allSubdomainAlternateEmail;
         }
       }
     }
@@ -337,7 +345,7 @@ class StandardGroupPolicy implements GroupPolicy {
   function generateAggregatedGroups($memberships) {
     $tld = $this->getDomain();
     $aggregatedGroups = array();
-    // Generate the aggregated group information
+    // Generated aggregated groups
     foreach ($memberships as $branch => $branchinfo) {
       if ((ctype_alpha($branch[0])) && array_key_exists('lists', $branchinfo)) {
         foreach ($branchinfo['lists'] as $office => $officeData) {
@@ -348,6 +356,17 @@ class StandardGroupPolicy implements GroupPolicy {
             $this->addAggregateGroupMember($aggregatedGroups, $branch, $office, $aggregateName, $aggregateGroupInfo);
           }
         }
+      }
+    }
+    // Remove any generated aggregated group that has only one member
+    foreach ($aggregatedGroups as $group => $data) {
+      if (!isset($data['members']) || (count($data['members']) <= 1)) {
+        unset($aggregatedGroups[$group]);
+      }
+    }
+    // Custom aggregated groups - these stay even if there is only one member
+    foreach ($memberships as $branch => $branchinfo) {
+      if ((ctype_alpha($branch[0])) && array_key_exists('lists', $branchinfo)) {
         // Look up the rules for additional aggregated groups for the branch.
         $group_properties = $this->defaultGroupProperties($branch, 'aggregated');
         $aggragated_groups_yaml = $this->getProperty('aggregated-groups', $group_properties);
@@ -377,12 +396,6 @@ class StandardGroupPolicy implements GroupPolicy {
         }
       }
     }
-    // Go back and remove any aggregated group that has only one member
-    foreach ($aggregatedGroups as $group => $data) {
-      if (!isset($data['members']) || (count($data['members']) <= 1)) {
-        unset($aggregatedGroups[$group]);
-      }
-    }
 
     return $aggregatedGroups;
   }
@@ -402,6 +415,41 @@ class StandardGroupPolicy implements GroupPolicy {
       );
     }
     $aggregatedGroups[$aggregatedGroupName]['members'][] = $emailAddress;
+  }
+
+  function generateMasterDirectory($state) {
+    $masterDirectory = array();
+    foreach ($state as $branch => $branchInfo) {
+      foreach ($branchInfo['lists'] as $office => $officeInfo) {
+        $mainAddress = $this->getGroupEmail($branch, $office);
+        $masterDirectory[$mainAddress] = $mainAddress;
+        if (array_key_exists('alternate-addresses', $officeInfo['properties'])) {
+          foreach ($officeInfo['properties']['alternate-addresses'] as $alternate) {
+            $masterDirectory[$alternate] = $mainAddress;
+          }
+        }
+      }
+    }
+    return $masterDirectory;
+  }
+
+  function removeDuplicateAlternates(&$aggregated, $masterDirectory) {
+    foreach ($aggregated as $group => $groupInfo) {
+      if (array_key_exists('alternate-addresses', $groupInfo['properties'])) {
+        $acceptableAlternates = array();
+        foreach ($groupInfo['properties']['alternate-addresses'] as $alternate) {
+          if (!array_key_exists($alternate, $masterDirectory)) {
+            $acceptableAlternates[] = $alternate;
+          }
+        }
+        if (empty($acceptableAlternates)) {
+          unset($aggregated[$group]['properties']['alternate-addresses']);
+        }
+        else {
+          $aggregated[$group]['properties']['alternate-addresses'] = $acceptableAlternates;
+        }
+      }
+    }
   }
 
   function normalize($state) {

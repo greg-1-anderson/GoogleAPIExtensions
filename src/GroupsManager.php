@@ -104,6 +104,8 @@ class GroupsManager {
     unset($existingState['_aggregated']);
     $existingState = $this->policy->generateParentage($existingState);
     $aggregated = $this->policy->generateAggregatedGroups($existingState);
+    $masterDirectory = $this->policy->generateMasterDirectory($existingState);
+    $this->policy->removeDuplicateAlternates($aggregated, $masterDirectory);
     $this->updateBranch('_aggregated', $aggregated);
   }
 

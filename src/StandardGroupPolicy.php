@@ -69,7 +69,9 @@ class StandardGroupPolicy implements GroupPolicy {
       'primary-office-alternate-email-principal-group' => '$(branch)@$(domain)',
       'primary-office-alternate-email-branch-group' => '$(branch)@$(parent).$(domain)',
       'member-email' => '$(branch)-$(member)@$(domain)',
-      'aggregate-group-email' => '$(aggregate)@$(branch).$(domain)',
+      'aggregate-group-email' => '$(branch)-$(aggregate)@$(domain)',
+      'subdomain-aggregate-group-email' => '$(aggregate)@$(branch).$(domain)',
+      'tld-aggregate-group-email' => '$(aggregate)@$(domain)',
     );
   }
 
@@ -222,6 +224,7 @@ class StandardGroupPolicy implements GroupPolicy {
         }
       }
     }
+
     return $result;
   }
 
@@ -364,6 +367,7 @@ class StandardGroupPolicy implements GroupPolicy {
         unset($aggregatedGroups[$group]);
       }
     }
+
     // Custom aggregated groups - these stay even if there is only one member
     foreach ($memberships as $branch => $branchinfo) {
       if ((ctype_alpha($branch[0])) && array_key_exists('lists', $branchinfo)) {
@@ -372,6 +376,7 @@ class StandardGroupPolicy implements GroupPolicy {
         $aggragated_groups_yaml = $this->getProperty('aggregated-groups', $group_properties);
         $aggragated_groups = Yaml::parse(trim($aggragated_groups_yaml));
         if (is_array($aggragated_groups)) {
+          $top_level_group = $this->getProperty('top-level-group', $group_properties);
           foreach ($aggragated_groups as $group => $group_info) {
             foreach ($group_info['members'] as $member) {
               if (array_key_exists($member, $branchinfo['lists'])) {
@@ -385,10 +390,23 @@ class StandardGroupPolicy implements GroupPolicy {
                 $memberAddress = $this->getSimplifiedProperty('member-email', $groupProperties);
                 $aggregateGroupAddress = $this->getSimplifiedProperty('aggregate-group-email', $groupProperties);
 
+                $alternateGroupAddress = FALSE;
+                if ($top_level_group == $branch) {
+                  $alternateGroupAddress = $this->getSimplifiedProperty('tld-aggregate-group-email', $groupProperties);
+                }
+                elseif ($this->isSubdomain($branch, $group_properties)) {
+                  $alternateGroupAddress = $this->getSimplifiedProperty('subdomain-aggregate-group-email', $groupProperties);
+                }
                 $aggregatedGroupName = $branch . '-' . $group;
                 $aggregatedGroupProperties = array(
-                  'alternate-addresses' => array($aggregateGroupAddress),
+                  'group-email' => $aggregateGroupAddress,
+                  'group-id' => $aggregateGroupAddress,
                 ) + $group_info['properties'];
+                if ($alternateGroupAddress) {
+                  $aggregatedGroupProperties += array(
+                    'alternate-addresses' => array($alternateGroupAddress),
+                  );
+                }
                 $this->addAggregateGroupEmailAddress($aggregatedGroups, $memberAddress, $aggregatedGroupName, $aggregatedGroupProperties);
               }
             }

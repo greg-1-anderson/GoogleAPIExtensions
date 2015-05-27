@@ -486,18 +486,22 @@ fogs-officers:
     - fogs-gophers@testdomain.org
 north-lesseroffices:
   properties:
-    alternate-addresses:
-      - lesseroffices@north.testdomain.org
+    group-email: north-lesseroffices@testdomain.org
+    group-id: north-lesseroffices@testdomain.org
     group-name: 'North Lesser Officers'
+    alternate-addresses:
+      - lesseroffices@testdomain.org
   members:
     - north-vicepresident@testdomain.org
     - north-secretary@testdomain.org
     - north-gophers@testdomain.org
 fogs-lesseroffices:
   properties:
+    group-email: fogs-lesseroffices@testdomain.org
+    group-id: fogs-lesseroffices@testdomain.org
+    group-name: 'Fogs Lesser Officers'
     alternate-addresses:
       - lesseroffices@fogs.testdomain.org
-    group-name: 'Fogs Lesser Officers'
   members:
     - fogs-gophers@testdomain.org";
 
@@ -560,18 +564,22 @@ fogs-officers:
     - fogs-gophers@testdomain.org
 north-lesseroffices:
   properties:
-    alternate-addresses:
-      - lesseroffices@north.testdomain.org
+    group-email: north-lesseroffices@testdomain.org
+    group-id: north-lesseroffices@testdomain.org
     group-name: 'North Lesser Officers'
+    alternate-addresses:
+      - lesseroffices@testdomain.org
   members:
     - north-vicepresident@testdomain.org
     - north-secretary@testdomain.org
     - north-gophers@testdomain.org
 fogs-lesseroffices:
   properties:
+    group-email: fogs-lesseroffices@testdomain.org
+    group-id: fogs-lesseroffices@testdomain.org
+    group-name: 'Fogs Lesser Officers'
     alternate-addresses:
       - lesseroffices@fogs.testdomain.org
-    group-name: 'Fogs Lesser Officers'
   members:
     - fogs-gophers@testdomain.org";
 

@@ -120,46 +120,60 @@ class GoogleAppsGroupsController implements GroupsController {
   }
 
   function insertOffice(Operation $op, $branch, $officename, $properties) {
-    $group_email = $properties['group-email'];
-    $group_name = $properties['group-name'];
+    if (!array_key_exists('group-email', $properties)) {
+      print("\nIn insertOffice: missing 'group-email' for $branch $officename\n");
+      var_export($properties);
+      print("\n");
+    }
+    else {
+      $group_email = $properties['group-email'];
+      $group_name = $properties['group-name'];
 
-    $newgroup = new \Google_Service_Directory_Group(array(
-      'email' => "$group_email",
-      'name' => "$group_name",
-    ));
+      $newgroup = new \Google_Service_Directory_Group(array(
+        'email' => "$group_email",
+        'name' => "$group_name",
+      ));
 
-    $req = $this->directoryService->groups->insert($newgroup);
-    $this->batch->add($req, $op->nextSequenceNumber());
+      $req = $this->directoryService->groups->insert($newgroup);
+      $this->batch->add($req, $op->nextSequenceNumber());
+    }
   }
 
   function configureOffice(Operation $op, $branch, $officename, $properties) {
-    $groupId = $properties['group-id'];
-    $settingData = new \Google_Service_Groupssettings_Groups();
+    if (!array_key_exists('group-id', $properties)) {
+      print("\nIn configureOffice: missing 'group-id' for $branch $officename\n");
+      var_export($properties);
+      print("\n");
+    }
+    else {
+      $groupId = $properties['group-id'];
+      $settingData = new \Google_Service_Groupssettings_Groups();
 
-    // TODO: pull settings from properties
+      // TODO: pull settings from properties
 
-    // INVITED_CAN_JOIN or CAN_REQUEST_TO_JOIN, etc.
-    $settingData->setWhoCanJoin("INVITED_CAN_JOIN");
-    // ALL_MANAGERS_CAN_POST, ALL_IN_DOMAIN_CAN_POST,
-    // ANYONE_CAN_POST, etc.
-    $settingData->setWhoCanPostMessage("ANYONE_CAN_POST");
+      // INVITED_CAN_JOIN or CAN_REQUEST_TO_JOIN, etc.
+      $settingData->setWhoCanJoin("INVITED_CAN_JOIN");
+      // ALL_MANAGERS_CAN_POST, ALL_IN_DOMAIN_CAN_POST,
+      // ANYONE_CAN_POST, etc.
+      $settingData->setWhoCanPostMessage("ANYONE_CAN_POST");
 
-    // By default, we will archive emails in all groups except for the
-    // aggregated groups, because it is assumed that these forward to
-    // groups that are archived.
-    $defaultIsArchived = ($branch != '_aggregated');
-    $settingData->setIsArchived(array_key_exists('archived', $properties) ? $properties['archived'] : $defaultIsArchived);
+      // By default, we will archive emails in all groups except for the
+      // aggregated groups, because it is assumed that these forward to
+      // groups that are archived.
+      $defaultIsArchived = ($branch != '_aggregated');
+      $settingData->setIsArchived(array_key_exists('archived', $properties) ? $properties['archived'] : $defaultIsArchived);
 
-    $req = $this->groupSettingsService->groups->patch($groupId, $settingData);
-    $this->batch->add($req, $op->nextSequenceNumber());
+      $req = $this->groupSettingsService->groups->patch($groupId, $settingData);
+      $this->batch->add($req, $op->nextSequenceNumber());
 
-    if (isset($properties['alternate-addresses'])) {
-      foreach ($properties['alternate-addresses'] as $alternate_address) {
-        $newalias = new \Google_Service_Directory_Alias(array(
-          'alias' => $alternate_address,
-        ));
-        $req = $this->directoryService->groups_aliases->insert($groupId, $newalias);
-        $this->batch->add($req, $op->nextSequenceNumber());
+      if (isset($properties['alternate-addresses'])) {
+        foreach ($properties['alternate-addresses'] as $alternate_address) {
+          $newalias = new \Google_Service_Directory_Alias(array(
+            'alias' => $alternate_address,
+          ));
+          $req = $this->directoryService->groups_aliases->insert($groupId, $newalias);
+          $this->batch->add($req, $op->nextSequenceNumber());
+        }
       }
     }
   }

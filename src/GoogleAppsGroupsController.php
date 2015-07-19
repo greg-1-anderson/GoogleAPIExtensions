@@ -1,11 +1,11 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions;
+namespace Westkingdom\HierarchicalGroupEmail;
 
-use Westkingdom\GoogleAPIExtensions\Internal\Operation;
+use Westkingdom\HierarchicalGroupEmail\Internal\Operation;
 
 /**
- * Use this groups controller with Westkingdom\GoogleAPIExtensions\Groups
+ * Use this groups controller with Westkingdom\HierarchicalGroupEmail\Groups
  * to update groups and group memberships in Google Apps.
  *
  * Batch mode is always used.  You may provide your own batch object,

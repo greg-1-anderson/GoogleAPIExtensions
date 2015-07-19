@@ -1,7 +1,7 @@
 <?php
 
-use Westkingdom\GoogleAPIExtensions\LegacyGroups;
-use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
+use Westkingdom\HierarchicalGroupEmail\LegacyGroups;
+use Westkingdom\HierarchicalGroupEmail\StandardGroupPolicy;
 
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Dumper;

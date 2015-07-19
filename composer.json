@@ -1,8 +1,8 @@
 {
-  "name": "westkingdom/google-api-extensions",
+  "name": "westkingdom/hierarchical-group-email",
   "type": "library",
-  "description": "Google Apps API Extensions",
-  "homepage": "https://github.com/westkingdom/google-api-extensions",
+  "description": "The Hierarchical Group Email library utilizes the Google Apps API to manage the membership lists for Google Groups.  Additional email forwards are automatically created for collections of groups, making it possible to email all of the groups in a branch, or all of the same group type in every branch.",
+  "homepage": "https://github.com/westkingdom/hierarchical-group-email",
   "license": "MIT",
   "authors": [
     {
@@ -24,12 +24,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Westkingdom\\GoogleAPIExtensions\\":    "src"
+      "Westkingdom\\HierarchicalGroupEmail\\":    "src"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Westkingdom\\GoogleAPIExtensions\\":    "tests"
+      "Westkingdom\\HierarchicalGroupEmail\\":    "tests"
     }
   },
   "extra": {

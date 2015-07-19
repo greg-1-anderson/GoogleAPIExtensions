@@ -1,8 +1,8 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions\Internal;
+namespace Westkingdom\HierarchicalGroupEmail\Internal;
 
-use Westkingdom\GoogleAPIExtensions;
+use Westkingdom\HierarchicalGroupEmail;
 
 class Journal {
   protected $ctrl;

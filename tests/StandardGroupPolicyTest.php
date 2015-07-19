@@ -1,6 +1,6 @@
 <?php
 
-use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
+use Westkingdom\HierarchicalGroupEmail\StandardGroupPolicy;
 use Prophecy\PhpUnit\ProphecyTestCase;
 
 class StandardGroupPolicyTestCase extends ProphecyTestCase {

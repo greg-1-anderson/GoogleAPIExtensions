@@ -1,9 +1,9 @@
 <?php
 
-use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
-use Westkingdom\GoogleAPIExtensions\GroupPolicy;
-use Westkingdom\GoogleAPIExtensions\BatchWrapper;
-use Westkingdom\GoogleAPIExtensions\Internal\Operation;
+use Westkingdom\HierarchicalGroupEmail\GoogleAppsGroupsController;
+use Westkingdom\HierarchicalGroupEmail\GroupPolicy;
+use Westkingdom\HierarchicalGroupEmail\BatchWrapper;
+use Westkingdom\HierarchicalGroupEmail\Internal\Operation;
 
 use Symfony\Component\Yaml\Dumper;
 

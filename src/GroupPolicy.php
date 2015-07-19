@@ -1,6 +1,6 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions;
+namespace Westkingdom\HierarchicalGroupEmail;
 
 /**
  * The GroupPolicy object is responsible for what groups

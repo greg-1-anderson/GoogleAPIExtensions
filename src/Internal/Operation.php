@@ -1,6 +1,6 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions\Internal;
+namespace Westkingdom\HierarchicalGroupEmail\Internal;
 
 class Operation {
   protected $runFunction;

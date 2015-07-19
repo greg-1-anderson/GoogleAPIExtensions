@@ -1,8 +1,8 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions;
+namespace Westkingdom\HierarchicalGroupEmail;
 
-use Westkingdom\GoogleAPIExtensions\Internal\Operation;
+use Westkingdom\HierarchicalGroupEmail\Internal\Operation;
 
 interface GroupsController {
   function begin();

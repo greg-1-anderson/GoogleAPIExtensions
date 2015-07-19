@@ -73,7 +73,7 @@ All of the tests are also run by [Travis CI](https://travis-ci.org/westkingdom/g
 If you follow the instructions in the following sections, code similar to
 the basic overview shown below should work.
 ```
-use Westkingdom\GoogleAPIExtensions\GroupsManager;
+use Westkingdom\HierarchicalGroupEmail\GroupsManager;
 
 $groupsManager = GroupsManager::createForDomain('My application', 'mydomain.org', $currentState);
 $currentState = $groupsManager->update($newState);
@@ -152,10 +152,10 @@ construct the internal classes yourself and modify them before making your
 GroupsManager.
 
 ```
-use Westkingdom\GoogleAPIExtensions\ServiceAccountAuthenticator;
-use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
-use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
-use Westkingdom\GoogleAPIExtensions\GroupsManager;
+use Westkingdom\HierarchicalGroupEmail\ServiceAccountAuthenticator;
+use Westkingdom\HierarchicalGroupEmail\StandardGroupPolicy;
+use Westkingdom\HierarchicalGroupEmail\GoogleAppsGroupsController;
+use Westkingdom\HierarchicalGroupEmail\GroupsManager;
 
 $authenticator = ServiceAccountAuthenticator("My application");
 $client = $authenticator->authenticate();
@@ -242,7 +242,7 @@ If you'd like to know what the GroupManager is going to do before it
 does it, you can use a BatchWrapper object.
 
 ```
-use Westkingdom\GoogleAPIExtensions\BatchWrapper;
+use Westkingdom\HierarchicalGroupEmail\BatchWrapper;
 
 $client->setUseBatch(true);
 $batch = new \Google_Http_Batch($client);

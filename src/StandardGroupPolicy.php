@@ -1,12 +1,12 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions;
+namespace Westkingdom\HierarchicalGroupEmail;
 
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Dumper;
 
 /**
- * Use this groups controller with Westkingdom\GoogleAPIExtensions\Groups
+ * Use this groups controller with Westkingdom\HierarchicalGroupEmail\Groups
  * to update groups and group memberships directly in Google Apps.
  *
  * The Standard Group Policy has some reasonable defaults that may

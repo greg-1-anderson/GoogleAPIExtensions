@@ -1,8 +1,8 @@
 <?php
 
-use Westkingdom\GoogleAPIExtensions\GroupsManager;
-use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
-use Westkingdom\GoogleAPIExtensions\Internal\Journal;
+use Westkingdom\HierarchicalGroupEmail\GroupsManager;
+use Westkingdom\HierarchicalGroupEmail\StandardGroupPolicy;
+use Westkingdom\HierarchicalGroupEmail\Internal\Journal;
 
 use Prophecy\PhpUnit\ProphecyTestCase;
 use Prophecy\Argument\Token\AnyValueToken;
@@ -83,7 +83,7 @@ west:
           group-email: all-rapiermarshals@westkingdom.org
       verify-function: verifyOffice"));
 
-    $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
+    $testController = $this->prophesize('Westkingdom\HierarchicalGroupEmail\GroupsController');
     $groupManager = new GroupsManager($testController->reveal(), $this->policy, $initial);
 
     $exported = $groupManager->export();
@@ -118,7 +118,7 @@ create:
 
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
-    $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
+    $testController = $this->prophesize('Westkingdom\HierarchicalGroupEmail\GroupsController');
     $groupManager = new GroupsManager($testController->reveal(), $this->policy, $this->initialState);
 
     // Prophesize that the new user will be added to the west webministers group.
@@ -182,7 +182,7 @@ _aggregated:
 
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
-    $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
+    $testController = $this->prophesize('Westkingdom\HierarchicalGroupEmail\GroupsController');
     $revealedController = $testController->reveal();
     $journal = new Journal($revealedController, $this->initialState);
     $groupManager = new GroupsManager($revealedController, $this->policy, $this->initialState, $journal);
@@ -226,7 +226,7 @@ west:
 
     // Create a new test controller prophecy, and reveal it to the
     // Groups object we are going to test.
-    $testController = $this->prophesize('Westkingdom\GoogleAPIExtensions\GroupsController');
+    $testController = $this->prophesize('Westkingdom\HierarchicalGroupEmail\GroupsController');
     $revealedController = $testController->reveal();
     $journal = new Journal($revealedController, $this->initialState);
     $groupManager = new GroupsManager($revealedController, $this->policy, $this->initialState, $journal);

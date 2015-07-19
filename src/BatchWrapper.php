@@ -1,6 +1,6 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions;
+namespace Westkingdom\HierarchicalGroupEmail;
 
 /**
  * A class that can be used like a Google_Http_Batch

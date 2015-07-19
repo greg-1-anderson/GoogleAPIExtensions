@@ -1,8 +1,8 @@
 <?php
 
-namespace Westkingdom\GoogleAPIExtensions;
+namespace Westkingdom\HierarchicalGroupEmail;
 
-use Westkingdom\GoogleAPIExtensions\Internal\Journal;
+use Westkingdom\HierarchicalGroupEmail\Internal\Journal;
 
 class GroupsManager {
   protected $ctrl;

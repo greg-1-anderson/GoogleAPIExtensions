@@ -1,18 +1,18 @@
-## TOC
+## Contents
 
-1. Hierarchical Group Mailing List Management
-1. Running the Tests
-1. Basic Example
-  1. Include this Library Using Composer
-  1. Set Up Your Authentication Information
-  1. Prepare your data in $currentState and $newState
-1. Expanded Example
-  1. Create a ServiceAccountAuthenticator
-  1. Ask the service account authenticator to authenticate with the appropriate scopes
-  1. Create a Standard Policy object
-  1. Create a Google Client and authenticate with Google
-  1. Create a Google Apps Groups Controller and Update It
-  1. Debugging, logging or prompting
+1. [Hierarchical Group Mailing List Management](#group-management)
+1. [Running the Tests](#running-the-tests)
+1. [Basic Example](#basic-example)
+  1. [Include this Library Using Composer](#composer-instructions)
+  1. [Configuring Your Authentication Information](#configuring-your-authentication-information)
+  1. [Prepare Your Data](#prepare-your-data)
+1. [Expanded Example](#expanded-example)
+  1. [Create a Service Authenticator](#create-a-service-authenticator)
+  1. [Authenticate](#authenticate)
+  1. [Create a Standard Group Policy](#create-a-standard-group-policy)
+  1. [Create a Google Apps Group Controller](#create-a-google-apps-group-controller)
+  1. [Create a Groups Object and Update It](#create-a-groups-object-and-update-it)
+  1. [Debugging, logging or prompting](#debugging-logging-or-prompting)
 
 ## Group Management
 
@@ -82,7 +82,7 @@ Even if you use this simple form, you need to understand how this API
 searches for and uses your authentication data, and how to manage the state
 of your data.  See below for more details on how this works.
 
-### Include this Library Using Composer
+### Composer Instructions
 
 The best way to install this library in your application is to use
 Composer.  Simply add the following line to your composer.json file's
@@ -105,7 +105,7 @@ Of course, it is possible to use this library without composer; you just
 need to be responsible for setting up the autoloader, or including the
 class files yourself.  However, using Composer is strongly recommended.
 
-### Set Up Your Authentication Information
+### Configuring Your Authentication Information
 
 Follow the [authorization information setup instructions](http://docs.westkingdom.org/en/latest/google-api/) on the 
 [documentation website](http://docs.westkingdom.org).

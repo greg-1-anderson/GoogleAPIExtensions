@@ -66,7 +66,7 @@ not necessary to set up any authentication credentials just to run the tests.
 1. Run `composer install`
 1. Run `./vendor/bin/phpunit tests`
 
-All of the tests are also run by [Travis CI](https://travis-ci.org/westkingdom/google-api-extensions) on every commit.
+All of the tests are also run by [Travis CI](https://travis-ci.org/westkingdom/hierarchical-group-email) on every commit.
 
 ## Basic Example
 
@@ -90,7 +90,7 @@ Composer.  Simply add the following line to your composer.json file's
 ```
 {
   "require": {
-    "westkingdom/google-api-extensions": "~1"
+    "westkingdom/hierarchical-group-email": "~1"
   }
 }
 ```

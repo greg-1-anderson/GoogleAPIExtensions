@@ -13,9 +13,8 @@
     }
   ],
   "require": {
-    "google/apiclient": "1.0.*@beta",
+    "google/apiclient": "~1",
     "phpmailer/phpmailer": "~5.2",
-    "symfony/console": "2.6.*",
     "symfony/yaml": "~2.2"
   },
   "require-dev": {

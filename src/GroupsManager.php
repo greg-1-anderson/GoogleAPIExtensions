@@ -39,7 +39,7 @@ class GroupsManager {
   }
 
   function normalize($memberships) {
-    $memberships = $this->policy->normalize($memberships);
+    return $this->policy->normalize($memberships);
   }
 
   /**

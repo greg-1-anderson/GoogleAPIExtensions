@@ -46,27 +46,52 @@ class GoogleAppsGroupsController implements GroupsController {
     // Fetch all the groups in this domain
     $opt = array('domain' => $domain);
     $data = $this->directoryService->groups->listGroups($opt);
+
+    print "got some groups:\n";
+    var_export($data);
+    print "\n";
+    print ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n\n";
+
     $groups = $data->getGroups();
 
-    // Iterate over the groups, and fill in info about each.
-    foreach ($groups as $groupInfo) {
-      $email = $groupInfo->getEmail();
-      $emailParts = explode('@', $email);
-      $addressParts = explode('-', $emailParts[0]);
-      $office = array_pop($addressParts);
-      $branch = implode('-', $addressParts);
-      $members = array();
-      $membersData = $this->directoryService->members->listMembers($email);
-      $membersList = $membersData->getMembers();
-      foreach ($membersList as $memberInfo) {
-        $members[] = $memberInfo->getEmail();
+    while (!empty($groups) ) {
+      print "Fetched " . count($groups) . " groups this iteration.\n";
+
+      // Iterate over the groups, and fill in info about each.
+      foreach ($groups as $groupInfo) {
+        $email = $groupInfo->getEmail();
+        $emailParts = explode('@', $email);
+        $addressParts = explode('-', $emailParts[0]);
+        $office = array_pop($addressParts);
+        $branch = implode('-', $addressParts);
+        $members = array();
+        print ">>> Fetch info about group $email\n";
+        $membersData = $this->directoryService->members->listMembers($email);
+        $membersList = $membersData->getMembers();
+        foreach ($membersList as $memberInfo) {
+          $members[] = $memberInfo->getEmail();
+        }
+        print "    " . implode(',', $members) . "\n";
+        $properties['group-name'] = $groupInfo->getName();
+        $properties['group-id'] = $groupInfo->getId();
+        $results[$branch]['lists'][$office] = array(
+          'members' => $members,
+          'properties' => $properties,
+        );
       }
-      $properties['group-name'] = $groupInfo->getName();
-      $properties['group-id'] = $groupInfo->getId();
-      $results[$branch]['lists'][$office] = array(
-        'members' => $members,
-        'properties' => $properties,
-      );
+
+      $nextPageToken = $data->getNextPageToken();
+      print "=============================================================\n";
+      print "Next page token is: $nextPageToken\n";
+      print "=============================================================\n";
+      if (!empty($nextPageToken)) {
+        $opt['pageToken'] = $nextPageToken;
+        $data = $this->directoryService->groups->listGroups($opt);
+        $groups = $data->getGroups();
+      }
+      else {
+        $groups = [];
+      }
     }
 
     return $results;

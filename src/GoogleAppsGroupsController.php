@@ -69,7 +69,7 @@ class GoogleAppsGroupsController implements GroupsController {
         $membersData = $this->directoryService->members->listMembers($email);
         $membersList = $membersData->getMembers();
         foreach ($membersList as $memberInfo) {
-          $members[] = $memberInfo->getEmail();
+          $members[] = strtolower($memberInfo->getEmail());
         }
         print "    " . implode(',', $members) . "\n";
         $properties['group-name'] = $groupInfo->getName();

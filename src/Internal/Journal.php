@@ -37,12 +37,13 @@ class Journal {
   }
 
   function getExistingState() {
-    return $this->existingState;
+    $result = $this->existingState;
+    $result = $this->alphebetizeLists($result);
+    return $result;
   }
 
   function export() {
-    $result = $this->existingState;
-    $result = $this->alphebetizeLists($result);
+    $result = $this->getExistingState();
     $queues = $this->exportOperationQueues();
     if (!empty($queues)) {
       $result['#queues'] = $queues;

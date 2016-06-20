@@ -47,11 +47,6 @@ class GoogleAppsGroupsController implements GroupsController {
     $opt = array('domain' => $domain);
     $data = $this->directoryService->groups->listGroups($opt);
 
-    print "got some groups:\n";
-    var_export($data);
-    print "\n";
-    print ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n\n";
-
     $groups = $data->getGroups();
 
     while (!empty($groups) ) {
@@ -78,6 +73,7 @@ class GoogleAppsGroupsController implements GroupsController {
           'members' => $members,
           'properties' => $properties,
         );
+        sleep(1);
       }
 
       $nextPageToken = $data->getNextPageToken();

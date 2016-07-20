@@ -10,10 +10,10 @@ include dirname(__FILE__) . "/vendor/autoload.php";
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Dumper;
 use GoogleAPIExtensions\Groups;
-use Westkingdom\GoogleAPIExtensions\ServiceAccountAuthenticator;
-use Westkingdom\GoogleAPIExtensions\StandardGroupPolicy;
-use Westkingdom\GoogleAPIExtensions\GoogleAppsGroupsController;
-use Westkingdom\GoogleAPIExtensions\BatchWrapper;
+use Westkingdom\HierarchicalGroupEmail\ServiceAccountAuthenticator;
+use Westkingdom\HierarchicalGroupEmail\StandardGroupPolicy;
+use Westkingdom\HierarchicalGroupEmail\GoogleAppsGroupsController;
+use Westkingdom\HierarchicalGroupEmail\BatchWrapper;
 
 
 $scopes = array(
@@ -52,33 +52,76 @@ $scopes = array(
 
 // Load our YAML data
 $groupData = file_get_contents(dirname(__FILE__) . "/server.westkingdom.org.yaml");
-$parsed = Yaml::parse($groupData);
-$newState = Westkingdom\GoogleAPIExtensions\GroupsManager::normalize($parsed);
+$newState = Yaml::parse($groupData);
 
-$groupData = file_get_contents(dirname(__FILE__) . "/currentstate.westkingdom.org.yaml");
-$parsed = Yaml::parse($groupData);
-$currentState = Westkingdom\GoogleAPIExtensions\GroupsManager::normalize($parsed);
+print "about to authenticate\n";
 
 $authenticator = new ServiceAccountAuthenticator("Google Group API Test");
 $client = $authenticator->authenticate('service-account.yaml', $scopes);
+
+if (empty($client->getAccessToken())) {
+  print "Could not authenticate.\n";
+  exit(1);
+}
+
+print "authenticated\n";
+
+/*
+// Get info about a user
+
+$service = new Google_Service_Directory($client);
+$data = $service->users->get("gregor.eilburg@westkingdom.org");
+var_export($data);
+print("\n");
+exit(0);
+*/
 
 
 $policy = new StandardGroupPolicy('westkingdom.org');
 $batch = new \Google_Http_Batch($client);
 $batchWrapper = new BatchWrapper($batch);
-$controller = new GoogleAppsGroupsController($client, $policy, $batchWrapper);
-$groupManager = new Westkingdom\GoogleAPIExtensions\GroupsManager($controller, $currentState);
-$groupManager->update($newState);
+$controller = new GoogleAppsGroupsController($client, $batchWrapper);
 
-$pendingOperations = $batchWrapper->getSimplifiedRequests();
+if (!file_exists('currentstate.westkingdom.org.yaml')) {
+  print "about to fetch\n";
+
+  $existing = $controller->fetch('westkingdom.org');
+  $dumper = new Dumper();
+  $dumper->setIndentation(2);
+  $existingAsYaml = trim($dumper->dump($existing, PHP_INT_MAX));
+
+  file_put_contents('currentstate.westkingdom.org.yaml', $existingAsYaml);
+
+  exit(0);
+}
+
+$groupData = file_get_contents(dirname(__FILE__) . "/currentstate.westkingdom.org.yaml");
+$currentState = Yaml::parse($groupData);
+
+$groupManager = new Westkingdom\HierarchicalGroupEmail\GroupsManager($controller, $policy, $currentState);
+$groupManager->update($newState);
 
 $dumper = new Dumper();
 $dumper->setIndentation(2);
-$pendingAsYaml = trim($dumper->dump($pendingOperations, PHP_INT_MAX));
 
+/*
+$pendingOperations = $batchWrapper->getSimplifiedRequests();
+$pendingAsYaml = trim($dumper->dump($pendingOperations, PHP_INT_MAX));
 print($pendingAsYaml);
+*/
+
+//exit(0);
+
+$groupManager->execute();
+
+$updatedState = $groupManager->export();
+$updatedStateAsYaml = trim($dumper->dump($updatedState, PHP_INT_MAX));
+print($updatedStateAsYaml);
+file_put_contents('currentstate.westkingdom.org.yaml', $updatedStateAsYaml);
 
 exit(0);
+
+
 
 // Actually do the update
 $batchWrapper->execute();

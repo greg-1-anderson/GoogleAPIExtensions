@@ -78,6 +78,7 @@ class GroupsManager {
 
     foreach ($memberships as $branch => $officesLists) {
       if ($branch[0] != '#') {
+        // print ">>> Update branch $branch\n";
         $offices = $officesLists['lists'];
         // Next, update or insert, depending on whether this branch is new.
         if (array_key_exists($branch, $existingState)) {
@@ -92,6 +93,7 @@ class GroupsManager {
     foreach ($existingState as $branch => $offices) {
       if ($branch[0] != '#') {
         if (!array_key_exists($branch, $memberships)) {
+          // print "<<< Delete branch $branch\n";
           $this->deleteBranch($branch, $offices);
         }
       }
@@ -167,11 +169,13 @@ class GroupsManager {
   function updateOfficeMembers($branch, $officename, $groupId, $updateMembers, $existingMembers) {
     foreach ($updateMembers as $emailAddress) {
       if (!in_array($emailAddress, $existingMembers)) {
+        // print "    +++ $officename: $emailAddress\n";
         $this->journal->insertMember($branch, $officename, $groupId, $emailAddress);
       }
     }
     foreach ($existingMembers as $emailAddress) {
       if (!in_array($emailAddress, $updateMembers)) {
+        // print "    --- $officename: $emailAddress [DELETE]\n";
         $this->journal->removeMember($branch, $officename, $groupId, $emailAddress);
       }
     }
@@ -185,6 +189,7 @@ class GroupsManager {
     }
     foreach ($existingAlternateAddresses as $emailAddress) {
       if (!in_array($emailAddress, $newAlternateAddresses)) {
+        // print "    ::: remove group alternate address: $officename: $emailAddress\n";
         $this->journal->removeGroupAlternateAddress($branch, $officename, $groupId, $emailAddress);
       }
     }

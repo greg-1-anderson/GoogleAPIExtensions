@@ -160,6 +160,10 @@ class GroupsManager {
   function updateOffice($branch, $officename, $officeData) {
     $existingState = $this->journal->getExistingState();
     $existingOffices = $existingState[$branch]['lists'];
+    if (!isset($existingOffices[$officename])) {
+      $existingOffices[$officename] = array();
+    }
+    $existingOffices[$officename] += array('members' => array());
     $this->updateOfficeMembers($branch, $officename, $officeData['properties']['group-id'], $officeData['members'], $existingOffices[$officename]['members']);
     $newAlternateAddresses = GroupsManager::getAlternateAddresses($branch, $officename, $officeData);
     $existingAlternateAddresses = GroupsManager::getAlternateAddresses($branch, $officename, $existingOffices[$officename]);

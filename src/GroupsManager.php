@@ -71,8 +71,12 @@ class GroupsManager {
    */
   function update($memberships) {
     $existingState = $this->journal->getExistingState();
-    unset($memberships['_aggregated']);
-    unset($existingState['_aggregated']);
+    if (isset($memberships['_aggregated'])) {
+      unset($memberships['_aggregated']);
+    }
+    if (isset($existingState['_aggregated'])) {
+      unset($existingState['_aggregated']);
+    }
     $memberships = $this->policy->normalize($memberships);
     $this->journal->begin();
 

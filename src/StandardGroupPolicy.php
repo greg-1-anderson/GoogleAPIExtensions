@@ -438,6 +438,10 @@ class StandardGroupPolicy implements GroupPolicy {
   function generateMasterDirectory($state) {
     $masterDirectory = array();
     foreach ($state as $branch => $branchInfo) {
+      if (!is_array($branchInfo) || !isset($branchInfo['lists']) || !is_array($branchInfo['lists'])) {
+        print "bad branch info for branch " . var_export($branch, true) . "\n";
+        continue;
+      }
       foreach ($branchInfo['lists'] as $office => $officeInfo) {
         $mainAddress = $this->getGroupEmail($branch, $office);
         $masterDirectory[$mainAddress] = $mainAddress;
@@ -510,6 +514,10 @@ class StandardGroupPolicy implements GroupPolicy {
   function normalizeLists($branch, $listsAndAliases) {
     // First, normalize the offices data
     $offices = array('lists' => array());
+    if (!is_array($listsAndAliases)) {
+      print "Data structure problems in normalizeLists. \$listsAndAliases should be an array, but instead it is: " . var_export($listsAndAliases, true) . "\n";
+      return $offices;
+    }
     if (array_key_exists('subgroups', $listsAndAliases)) {
       $offices['subgroups'] = $listsAndAliases['subgroups'];
     }
